@@ -5,56 +5,53 @@ import time
 import operator
 import glob
 import subprocess
+import six
 from argparse import ArgumentParser
 
+SLACK_PLUGIN_CODE = b"""
+document.getElementById(\'msg_input\').dir = \'auto\';
 
-SLACK_PLUGIN_CODE = """
-    (function() {
+function elementShouldBeRTL(element) {
+    return /[\xd7\x90-\xd7\xaa]/.test(element.innerHTML);
+}
 
-      window.document.getElementById('msg_input').dir = 'auto';
+function alreadyApplied(element) {
+    return element.children.length == 1 && (
+            element.children[0].tagName == "P" || element.children[0].tagName == "p");
+}
 
-      function elementShouldBeRTL(element) {
-        return /[א-ת]/.test(element.innerHTML);
-      }
-
-      function alreadyApplied(element) {
-        return element.children.length == 1 && (
-          element.children[0].tagName == "P" || element.children[0].tagName == "p");
-      }
-
-      function applyTo(element) {
-        element.innerHTML = '<p style="direction: rtl; text-align: left; margin: 0;">' + element.innerHTML + '</p>';
-        for (var i in element.children[0].children) {
-          var child = element.children[0].children[i];
-          if (!(child.style instanceof CSSStyleDeclaration))
+function applyTo(element) {
+    element.innerHTML = \'<p style="direction: rtl; text-align: left; margin: 0;">\' + element.innerHTML + \'</p>\';
+    for (var i in element.children[0].children) {
+        var child = element.children[0].children[i];
+        if (!(child.style instanceof CSSStyleDeclaration))
             continue;
-          child.style.textAlign = "initial";
-        }
-      }
+        child.style.textAlign = "initial";
+    }
+}
 
-      function setDirections() {
-        var contents = document.getElementsByClassName('c-message__body');
-        for (var i in contents) {
-          var element = contents[i];
-          if (!elementShouldBeRTL(element))
+function setDirections() {
+    var contents = document.getElementsByClassName(\'c-message__body\');
+    for (var i in contents) {
+        var element = contents[i];
+        if (!elementShouldBeRTL(element))
             continue;
-          if (alreadyApplied(element))
+        if (alreadyApplied(element))
             continue;
-          applyTo(element);
-        }
-      }
+        applyTo(element);
+    }
+}
 
-      function domModified() {
-        document.body.removeEventListener('DOMSubtreeModified', domModified);
-        setTimeout(function() { // debouce modifications
-          setDirections();
-          document.body.addEventListener('DOMSubtreeModified', domModified);
-        }, 500);
-      }
+function domModified() {
+    document.body.removeEventListener(\'DOMSubtreeModified\', domModified);
+    setTimeout(function() { // debouce modifications
+        setDirections();
+        document.body.addEventListener(\'DOMSubtreeModified\', domModified);
+    }, 500);
+}
 
-      document.body.addEventListener("DOMSubtreeModified", domModified);
-    })();
-"""
+document.body.addEventListener("DOMSubtreeModified", domModified);
+""".decode('utf-8')
 
 SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
@@ -129,18 +126,18 @@ def main():
 
     slack_path = find_slack_path(args.version)
 
-    print("Running slack from %s" % slack_path)
+    six.print_("Running slack from %s" % slack_path)
     run_slack(slack_path,args.port)
 
-    print("Sleeping for %s seconds" % args.time, end='', flush=True)
+    six.print_("Sleeping for %s seconds" % args.time, end='', flush=True)
     for i in range(args.time):
-        print('.', end='', flush=True)
+        six.print_('.', end='', flush=True)
         time.sleep(1)
     inject_script(args.port, SLACK_PLUGIN_CODE)
     if args.debug:
         inject_script(args.port, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
 
-    print("Hopefully done ")
+    six.print_("Hopefully done ")
 
 
 if __name__ == "__main__":
