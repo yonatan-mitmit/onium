@@ -84,7 +84,8 @@ def find_slack_path(version):
     return p
 
 def run_slack(path, port):
-    subprocess.Popen([os.path.join(path,"slack.exe"), "--remote-debugging-port=%d" % port])
+    DETACHED_PROCESS = 0x00000008
+    subprocess.Popen([os.path.join(path,"slack.exe"), "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
 
 
 def inject_script(port, script):
