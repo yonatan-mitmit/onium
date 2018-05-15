@@ -1,6 +1,6 @@
 """
-setup.py for Slackins - a chorme plugin injector for electron based app.
-First version is dedicated for Slack. 
+setup.py for Positronium - a chorme plugin injector for electron based app.
+First version is dedicated for injecting hebrew-support plugin into the slack app. 
 """
 
 # Always prefer setuptools over distutils
@@ -19,7 +19,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 # Fields marked as "Optional" may be commented out.
 
 setup(
-    name='slackins',  # Required
+    name='positronium',  # Required
     version='1.0.0',  # Required
     description='Hebrew support for Slack app',  # Required
     long_description=long_description,  # Optional
@@ -71,7 +71,7 @@ setup(
     #   py_modules=["my_module"],
     #
     #packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    py_modules=["slackins.py"],
+    py_modules=["positronium.py"],
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
@@ -90,7 +90,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'slackins=slackins:main',
+            'positronium=positronium:main',
         ],
     },
 )
