@@ -21,10 +21,10 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='positronium',  # Required
     version='1.0.0',  # Required
-    description='Hebrew support for Slack app',  # Required
+    description='Extension injector into Electron apps - Injects hebrew support into Slack app',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
-    url='https://mitmit-ysa@bitbucket.org/mitmit-ysa/slackins.git',  # Optional
+    url='https://mitmit-ysa@bitbucket.org/mitmit-ysa/lackins.git',  # Optional
     author='Yonatan Striem-Amit',  # Optional
     author_email='yonatan@striem-amit.com',  # Optional
 
