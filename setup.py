@@ -1,5 +1,5 @@
 """
-setup.py for Positronium - a chorme plugin injector for electron based app.
+setup.py for Onium - a chorme plugin injector for electron based app.
 First version is dedicated for injecting hebrew-support plugin into the slack app. 
 """
 
@@ -19,12 +19,12 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 # Fields marked as "Optional" may be commented out.
 
 setup(
-    name='positronium',  # Required
-    version='1.0.0',  # Required
+    name='onium',  # Required
+    version='0.1.0',  # Required
     description='Extension injector into Electron apps - Injects hebrew support into Slack app',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
-    url='https://mitmit-ysa@bitbucket.org/mitmit-ysa/lackins.git',  # Optional
+    url='https://github.com/yonatan-mitmit/onium',  # Optional
     author='Yonatan Striem-Amit',  # Optional
     author_email='yonatan@striem-amit.com',  # Optional
 
@@ -37,10 +37,6 @@ setup(
         #   4 - Beta
         #   5 - Production/Stable
         'Development Status :: 4 - Beta',
-
-        # Indicate who your project is intended for
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
 
         # Pick your license as you wish
         'License :: OSI Approved :: MIT License',
@@ -71,7 +67,7 @@ setup(
     #   py_modules=["my_module"],
     #
     #packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    py_modules=["positronium.py"],
+    py_modules=["onium.py"],
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
@@ -90,7 +86,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'positronium=positronium:main',
+            'onium=onium:main',
         ],
     },
 )
