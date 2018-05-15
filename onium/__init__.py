@@ -12,6 +12,7 @@ import subprocess
 import six
 from argparse import ArgumentParser
 from sys import platform as _platform
+from colorama import init as colorama_init, Fore, Style
 
 
 SLACK_PLUGIN_CODE = b"""
@@ -144,18 +145,22 @@ def main():
 
     slack_path = find_slack_path(args.version)
 
-    six.print_("Running slack from %s" % slack_path)
+    colorama_init(autoreset=True)
+
+    six.print_("Running slack from %s %s" % (Fore.GREEN, slack_path))
     run_slack(slack_path,args.port)
 
-    six.print_("Giving Slack time to load. Sleeping for %s seconds" % args.time, end='', flush=True)
+    six.print_("Giving Slack time to load. ")
     for i in range(args.time):
-        six.print_('.', end='', flush=True)
+        six.print_("Sleeping for %s%s%s seconds." % (Fore.GREEN, args.time - i, Style.RESET_ALL), end='\r', flush=True)
         time.sleep(1)
+
+    six.print_(" " * 50 , end='\n', flush=True)
     inject_script(args.port, SLACK_PLUGIN_CODE)
     if args.debug:
         inject_script(args.port, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
 
-    six.print_("Hopefully done ")
+    six.print_("Hopefully done")
 
 
 if __name__ == "__main__":
