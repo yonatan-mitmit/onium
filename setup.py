@@ -20,7 +20,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='onium',  # Required
-    version='0.1.0',  # Required
+    version='0.1.1',  # Required
     description='Extension injector into Electron apps - Injects hebrew support into Slack app',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)

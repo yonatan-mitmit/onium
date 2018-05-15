@@ -127,17 +127,17 @@ def main():
     parser.add_argument("-t", "--time",
                       default=15,
                       type=int,
-                      help="Wait for Slack to load for timeout seconds before injecting [default: %default]")
+                      help="Wait for Slack to load for timeout seconds before injecting [default: %(default)d]")
 
     parser.add_argument("-d","--debug", 
                       default=False,
                       action="store_true",
-                      help="Additionally attempt to inject dev tools code [default: %defaut]")
+                      help="Additionally attempt to inject dev tools code [default: %(default)r]")
 
     parser.add_argument("-p", "--port",
                       type=int,
                       default=9222,
-                      help="Port on which Slack is listening to debug interface [default: %default]")
+                      help="Port on which Slack is listening to debug interface [default: %(default)d]")
 
     # parse args
     args  = parser.parse_args()
@@ -147,7 +147,7 @@ def main():
     six.print_("Running slack from %s" % slack_path)
     run_slack(slack_path,args.port)
 
-    six.print_("Sleeping for %s seconds" % args.time, end='', flush=True)
+    six.print_("Giving Slack time to load. Sleeping for %s seconds" % args.time, end='', flush=True)
     for i in range(args.time):
         six.print_('.', end='', flush=True)
         time.sleep(1)
