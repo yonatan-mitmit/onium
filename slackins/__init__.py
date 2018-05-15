@@ -1,5 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import pychrome
 import os
+import platform
 import sys
 import time
 import operator
@@ -7,6 +11,8 @@ import glob
 import subprocess
 import six
 from argparse import ArgumentParser
+from sys import platform as _platform
+
 
 SLACK_PLUGIN_CODE = b"""
 document.getElementById(\'msg_input\').dir = \'auto\';
@@ -67,22 +73,34 @@ SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown",
 });"""
 
 def find_slack_path(version):
-    slack_root = os.path.join(os.environ['LOCALAPPDATA'],'slack') 
-    apps = os.path.join(slack_root, "app-")
-    candidates = [x for x in glob.glob(os.path.join(apps + "*")) if os.path.isdir(x)]
+    if _platform == 'darwin':
+        p = '/Applications/Slack.app/Contents/MacOS'
+        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack")):
+            raise Exception("%s is not a valid slack directory" % p)
+        return p
 
-    if version == "auto":
-        versions = [[int(y) for y in x.rsplit('-',1)[-1].split('.')] for x in candidates]
-        max_index, max_value = max(enumerate(versions), key=operator.itemgetter(1))
-        return candidates[max_index]
-    p = os.path.join(apps,version)
-    if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack.exe")):
-        raise Exception("%s is not a valid slack directory" % p)
-    return p
+    elif _platform == 'win32' or _platform == 'win64':
+        slack_root = os.path.join(os.environ['LOCALAPPDATA'],'slack')
+        apps = os.path.join(slack_root, "app-")
+        candidates = [x for x in glob.glob(os.path.join(apps + "*")) if os.path.isdir(x)]
+
+        if version == "auto":
+            versions = [[int(y) for y in x.rsplit('-',1)[-1].split('.')] for x in candidates]
+            max_index, max_value = max(enumerate(versions), key=operator.itemgetter(1))
+            return candidates[max_index]
+        p = os.path.join(apps,version)
+        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack.exe")):
+            raise Exception("%s is not a valid slack directory" % p)
+        return p
 
 def run_slack(path, port):
     DETACHED_PROCESS = 0x00000008
-    subprocess.Popen([os.path.join(path,"slack.exe"), "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
+
+    if _platform == 'darwin':
+        subprocess.Popen([os.path.join(path,'slack'),'--remote-debugging-port=%d' % port)], shell=True)
+    elif _platform == 'win32' or _platform == 'win64':
+        subprocess.Popen([os.path.join(path, 'slack.exe'), "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
+
 
 
 def inject_script(port, script):
