@@ -97,7 +97,7 @@ def run_slack(path, port):
     DETACHED_PROCESS = 0x00000008
 
     if _platform == 'darwin':
-        subprocess.Popen([os.path.join(path,'slack'),'--remote-debugging-port=%d' % port], shell=True)
+        subprocess.Popen([os.path.join('/Applications/Slack.app/Contents/MacOS/slack --remote-debugging-port=%d' % port)], shell=True)
     elif _platform == 'win32' or _platform == 'win64':
         subprocess.Popen([os.path.join(path, 'slack.exe'), "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
 
