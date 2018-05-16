@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pychrome
+import requests
 import os
 import platform
 import sys
@@ -104,13 +105,43 @@ def run_slack(path, port):
 
 
 
-def inject_script(port, script):
-    browser = pychrome.Browser(url = "http://127.0.0.1:%d" % port)
-    tabs = browser.list_tab()
-    for tab in tabs: # Inject into all open tabs
-        tab.start()
-        tab.Runtime.evaluate(expression = script)
-        tab.stop()
+def inject_script(tab, script):
+    tab.Runtime.evaluate(expression = script)
+
+
+def get_browser_connection(timeout, port):
+    try:
+        url = "http://127.0.0.1:%d" % port
+        for i in range(timeout):
+            try:
+                browser = pychrome.Browser(url)
+                browser.list_tab()
+                return (browser, timeout - i)
+            except requests.exceptions.ConnectionError:
+                pass
+            except: 
+                six.print_(sys.exc_info()[0])
+            six.print_("Establishing connection with slack. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i, Style.RESET_ALL), end='\r', flush=True)
+            time.sleep(1)
+        raise ConnectionError("Can't connect to slack at %s" % url)
+    finally:
+        six.print_("\033[K" , end='\r', flush=True)
+
+
+def find_slack_tab(browser, div, timeout):
+    try: 
+        for i in range(timeout):
+            for tab in browser.list_tab():
+                tab.start()
+                res = tab.Runtime.evaluate(expression = "document.getElementById('%s')" % div)
+                if res.get('result',{}).get('objectId',None) is not None: # Found element with that name, screen is loaded
+                    return (tab, timeout - i)
+                tab.stop()
+            six.print_("Waiting for target window to load. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i , Style.RESET_ALL), end='\r', flush=True)
+            time.sleep(1)
+        raise ConnectionError("Couldn't find slack window")
+    finally:
+        six.print_("\033[K" , end='\r', flush=True)
 
 
 
@@ -151,16 +182,19 @@ def main():
     run_slack(slack_path,args.port)
 
     six.print_("Giving Slack time to load. ")
-    for i in range(args.time):
-        six.print_("Sleeping for %s%s%s seconds." % (Fore.GREEN, args.time - i, Style.RESET_ALL), end='\r', flush=True)
-        time.sleep(1)
+    browser, args.time = get_browser_connection(args.time, args.port)
 
-    six.print_(" " * 50 , end='\n', flush=True)
-    inject_script(args.port, SLACK_PLUGIN_CODE)
+    six.print_("Looking for the slack windows. ")
+    tab, args.time = find_slack_tab(browser, 'msg_input', args.time)
+    time.sleep(min(1, args.time)) #Giving it an extra second
+
+    inject_script(tab, SLACK_PLUGIN_CODE)
     if args.debug:
-        inject_script(args.port, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
+        inject_script(tab, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
 
-    six.print_("Hopefully done")
+    tab.stop()
+
+    six.print_("Done")
 
 
 if __name__ == "__main__":
