@@ -75,6 +75,27 @@ SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown",
     }
 });"""
 
+def find_slack_local_path():
+    slack_root = os.path.join(os.environ['LOCALAPPDATA'],'slack')
+    if os.path.isdir(slack_root): # Local install mode
+        apps = os.path.join(slack_root, "app-")
+        candidates = [x for x in glob.glob(os.path.join(apps + "*")) if os.path.isdir(x)]
+
+        versions = [[int(y) for y in x.rsplit('-',1)[-1].split('.')] for x in candidates]
+        max_index, max_value = max(enumerate(versions), key=operator.itemgetter(1))
+        return candidates[max_index]
+
+def find_slack_store_path():
+    try:
+        slack_root = subprocess.check_output(["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", '(Get-AppxPackage | where {$_.Name -match \"slack\"} ).InstallLocation'])
+        slack_root = slack_root.decode('utf-8').strip()
+        if not os.path.isdir(slack_root): return None
+        return os.path.join(slack_root, "app")
+    except subprocess.CalledProcessError:
+        pass
+
+
+
 def find_slack_path(version):
     if _platform == 'darwin':
         p = '/Applications/Slack.app/Contents/MacOS'
@@ -83,15 +104,18 @@ def find_slack_path(version):
         return p
 
     elif _platform == 'win32' or _platform == 'win64':
-        slack_root = os.path.join(os.environ['LOCALAPPDATA'],'slack')
-        apps = os.path.join(slack_root, "app-")
-        candidates = [x for x in glob.glob(os.path.join(apps + "*")) if os.path.isdir(x)]
+        if version == "store":
+            p = find_slack_store_path()
+        elif version == "local":
+            p = find_slack_local_path()
+        elif version == "auto":
+            p = find_slack_local_path()
+            if p is None: return find_slack_store_path()
+        else:
+            p = version
 
-        if version == "auto":
-            versions = [[int(y) for y in x.rsplit('-',1)[-1].split('.')] for x in candidates]
-            max_index, max_value = max(enumerate(versions), key=operator.itemgetter(1))
-            return candidates[max_index]
-        p = os.path.join(apps,version)
+        if p is None:
+            raise Exception("Cannot find a valid slack path in %s" % version)
         if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack.exe")):
             raise Exception("%s is not a valid slack directory" % p)
         return p
@@ -164,9 +188,9 @@ def main():
 
     This program injects the Chrome's hebrew_slack plugin into the electron (desktop) version of the slack app
     """)
-    parser.add_argument("-v", "--version",
-                      action="store", dest="version", default="auto",
-                      help="Version of slack to run [default: auto]")
+    parser.add_argument("-l", "--location",
+                      action="store", dest="location", default="auto",
+                      help="Location of slack to run, or local, store, auto [default: auto]")
 
     parser.add_argument("-t", "--time",
                       default=15,
@@ -186,7 +210,7 @@ def main():
     # parse args
     args  = parser.parse_args()
 
-    slack_path = find_slack_path(args.version)
+    slack_path = find_slack_path(args.location)
 
     colorama_init(autoreset=True)
     kill_existing_slack()
@@ -206,7 +230,10 @@ def main():
     if args.debug:
         inject_script(tab, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
 
-    tab.stop()
+    try: 
+        tab.stop()
+    except:
+        pass
 
     six.print_("Done")
 
