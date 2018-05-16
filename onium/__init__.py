@@ -114,7 +114,10 @@ def kill_existing_slack():
         name = os.path.splitext(i.name())[0]         
         if name.lower() == "slack":               
             six.print_("Killing slack process Pid:%s%s%s." % (Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
-            i.terminate()                         
+            try:
+                i.terminate()                         
+            except:
+                pass
 
 
 
