@@ -20,7 +20,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='onium',  # Required
-    version='0.2.0',  # Required
+    version='0.2.1',  # Required
     description='Extension injector into Electron apps - Injects hebrew support into Slack app',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
@@ -75,7 +75,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pychrome', 'six', 'colorama'],  # Optional
+    install_requires=['pychrome', 'six', 'colorama', 'psutil'],  # Optional
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow

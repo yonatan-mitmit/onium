@@ -11,6 +11,7 @@ import operator
 import glob
 import subprocess
 import six
+import psutil
 from argparse import ArgumentParser
 from sys import platform as _platform
 from colorama import init as colorama_init, Fore, Style
@@ -108,6 +109,14 @@ def run_slack(path, port):
 def inject_script(tab, script):
     tab.Runtime.evaluate(expression = script)
 
+def kill_existing_slack():
+    for i in psutil.process_iter():               
+        name = os.path.splitext(i.name())[0]         
+        if name.lower() == "slack":               
+            six.print_("Killing slack process Pid:%s%s%s." % (Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
+            i.terminate()                         
+
+
 
 def get_browser_connection(timeout, port):
     try:
@@ -177,6 +186,8 @@ def main():
     slack_path = find_slack_path(args.version)
 
     colorama_init(autoreset=True)
+    kill_existing_slack()
+
 
     six.print_("Running slack from %s %s" % (Fore.GREEN, slack_path))
     run_slack(slack_path,args.port)
