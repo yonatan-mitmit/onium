@@ -159,7 +159,7 @@ def get_browser_connection(timeout, port):
                 six.print_(sys.exc_info()[0])
             six.print_("Establishing connection with slack. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i, Style.RESET_ALL), end='\r', flush=True)
             time.sleep(1)
-        raise ConnectionError("Can't connect to slack at %s" % url)
+        raise IOError("Can't connect to slack at %s" % url)
     finally:
         six.print_("\033[K" , end='\r', flush=True)
 
@@ -175,7 +175,7 @@ def find_slack_tab(browser, div, timeout):
                 tab.stop()
             six.print_("Waiting for target window to load. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i , Style.RESET_ALL), end='\r', flush=True)
             time.sleep(1)
-        raise ConnectionError("Couldn't find slack window")
+        raise IOError("Couldn't find slack window")
     finally:
         six.print_("\033[K" , end='\r', flush=True)
 
