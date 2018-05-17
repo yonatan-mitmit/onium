@@ -96,37 +96,69 @@ def find_slack_store_path():
 
 
 
-def find_slack_path(version):
+def find_slack_path(location):
     if _platform == 'darwin':
-        p = '/Applications/Slack.app/Contents/MacOS'
+        if location == "auto":
+            p = '/Applications/Slack.app/Contents/MacOS'
+        else: 
+            p = location
         if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack")):
             raise Exception("%s is not a valid slack directory" % p)
-        return p
+        return os.path.join(p,"slack")
 
     elif _platform == 'win32' or _platform == 'win64':
-        if version == "store":
+        if location == "store":
             p = find_slack_store_path()
-        elif version == "local":
+        elif location == "local":
             p = find_slack_local_path()
-        elif version == "auto":
+        elif location == "auto":
             p = find_slack_local_path()
-            if p is None: return find_slack_store_path()
+            if p is None: p = find_slack_store_path()
         else:
-            p = version
+            p = location
 
         if p is None:
-            raise Exception("Cannot find a valid slack path in %s" % version)
+            raise Exception("Cannot find a valid slack path in %s" % location)
         if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack.exe")):
             raise Exception("%s is not a valid slack directory" % p)
-        return p
+        return os.path.join(p,"slack.exe")
+
+    elif _platform.startswith('linux'):
+        p = None
+        if location == "auto":
+            p = '/Applications/Slack.app/Contents/MacOS'
+        else:
+            for path in os.environ["PATH"].split(os.pathsep):
+                p = os.path.join(path, 'slack')
+                if os.path.isfile(slack_path) and os.access(slack_path, os.X_OK):
+                    break
+        if p is None:
+            raise Exception("Could not find slack in path")
+
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+        else:
+            raise Exception("%s is not a valid slack path" % p)
+    else:
+        raise Exception ("%s is not a supported platform" % _platfom)
+
+
+
 
 def run_slack(path, port):
     DETACHED_PROCESS = 0x00000008
 
     if _platform == 'darwin':
-        subprocess.Popen([os.path.join('/Applications/Slack.app/Contents/MacOS/slack --remote-debugging-port=%d' % port)], shell=True)
+        subprocess.Popen([path, '--remote-debugging-port=%d' % port], shell=True)
+
     elif _platform == 'win32' or _platform == 'win64':
-        subprocess.Popen([os.path.join(path, 'slack.exe'), "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
+        subprocess.Popen([path, "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
+
+    elif _platform.startswith('linux'):
+        subprocess.Popen([path, "--remote-debugging-port=%d" % port], shell=False)
+
+    else:
+        raise Exception("%s is not a supported platform" % _platfom)
 
 
 
@@ -190,7 +222,7 @@ def main():
     """)
     parser.add_argument("-l", "--location",
                       action="store", dest="location", default="auto",
-                      help="Location of slack to run, or local, store, auto [default: auto]")
+                      help="Location of slack to run, or auto, local (Windows only), store (Windows only) [default: auto]")
 
     parser.add_argument("-t", "--time",
                       default=15,
