@@ -10,20 +10,26 @@ from codecs import open
 from os import path
 
 here = path.abspath(path.dirname(__file__))
+readme_file = path.join(here, 'README.md')
 
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+    long_description = long_description.replace("\r","")
+except (ImportError, OSError) as e:
+    print("\n\n!!! pandoc not found, long_description is bad, don't upload this to PyPI !!!\n\n")
+    with open(readme_file, encoding='utf-8') as f:
+        long_description = f.read()
+
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 
 setup(
     name='onium',  # Required
-    version='0.2.5',  # Required
+    version='0.3.0',  # Required
     description='Onium - Inject hebrew support into slack destop app',  # Required
     long_description=long_description,  # Optional
-    long_description_content_type='text/markdown',  # Optional (see note above)
     url='https://github.com/yonatan-mitmit/onium',  # Optional
     author='Yonatan Striem-Amit',  # Optional
     author_email='yonatan@striem-amit.com',  # Optional
