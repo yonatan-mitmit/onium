@@ -6,11 +6,11 @@ inject Chrome plugins into an Electron app.
 The code was developed to inject the Hebrew support (RTL) support into Slack, but the concept can be changed to other apps and plugins. 
 
 
-Waht is Onium?
+What is Onium?
 --------------
 
-Onium is a tool to inject the hebrew support chrome plugin into the slack desktop app. 
-Ths tool was built to allow to inject any chrome plugin into electron, and will
+Onium is a tool to inject the Hebrew support chrome plugin into the slack desktop app. 
+The tool was built to allow to inject any chrome plugin into electron, and will
 be changed in the future to support other electron apps. 
 
 Onium uses Shlomi Matichin's excellent [slack_hebrew](https://github.com/shlomimatichin/slack-hebrew) plugin.
@@ -35,7 +35,7 @@ As long as python's scripts folder is in your path, simply rung
 Usage
 -----
 
-Onium supports various command line paramters
+Onium supports various command line parameters
 
 ```
 usage: onium [-h] [-l LOCATION] [-t TIME] [-d] [-p PORT]
