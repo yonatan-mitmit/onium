@@ -211,7 +211,15 @@ def find_slack_tab(browser, div, timeout):
     finally:
         six.print_("\033[K" , end='\r', flush=True)
 
-
+def update_slack_plugin():
+    url = r'https://raw.githubusercontent.com/shlomimatichin/slack-hebrew/master/source/slack-hebrew.js'
+    six.print_("Downloading slack plugin from %s%s%s." % (Fore.GREEN, url, Style.RESET_ALL), end='\n', flush=True)
+    r = requets.get(url)
+    if r.status_code == 200:
+        return r.content.decode('utf-8')
+    else:
+        six.print_("Couldn't download plugin. Error was %s%s%s." % (Fore.RED, r.status_code , Style.RESET_ALL), end='\n', flush=True)
+        raise Exception("Can't download")
 
 
 def main():
@@ -239,22 +247,50 @@ def main():
                       default=9222,
                       help="Port on which Slack is listening to debug interface [default: %(default)d]")
 
+    parser.add_argument("--no-kill", dest="kill", action='store_false',
+                        help="Do not attempt to kill Slack before starting",
+                        default=True
+                        )
+
+    parser.add_argument("--no-start", dest="start", action='store_false',
+                        help="Do not attempt to start Slack (assume already running)",
+                        default=True
+                        )
+
+    update_parser = parser.add_mutually_exclusive_group(required=False)
+    update_parser.add_argument('--update', dest='update', action='store_true', 
+            help="Update the slack plugin from slack_hebrew github page"
+            )
+    update_parser.add_argument('--no-update', dest='update', action='store_false',
+            help="Do not update the slack plugin"
+            )
+    parser.set_defaults(update=True)
+
     # parse args
     args  = parser.parse_args()
 
     slack_path = find_slack_path(args.location)
 
     colorama_init(autoreset=True)
-    kill_existing_slack()
+    if args.update:
+        try:
+            global SLACK_PLUGIN_CODE
+            SLACK_PLUGIN_CODE = update_slack_plugin()
+        except:
+            pass #continue with existing script
+
+    if args.kill:
+        kill_existing_slack()
 
 
-    six.print_("Running slack from %s %s" % (Fore.GREEN, slack_path))
-    run_slack(slack_path,args.port)
+    if args.start:
+        six.print_("Running slack from %s %s." % (Fore.GREEN, slack_path))
+        run_slack(slack_path,args.port)
 
-    six.print_("Giving Slack time to load. ")
+    six.print_("Connecting to slack.")
     browser, args.time = get_browser_connection(args.time, args.port)
 
-    six.print_("Looking for the slack windows. ")
+    six.print_("Looking for the slack windows.")
     tab, args.time = find_slack_tab(browser, 'msg_input', args.time)
     time.sleep(min(1, args.time)) #Giving it an extra second
 
