@@ -1,5 +1,5 @@
-Onium - Inject hebrew support into slack destop app 
-===================================================
+Onium - Inject hebrew support into slack desktop app 
+=====================================================
 
 This little utility is using Electron's debug API (Using chrome's debug API) to
 inject Chrome plugins into an Electron app. 
