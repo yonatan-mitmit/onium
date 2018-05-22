@@ -79,5 +79,5 @@ Onium is licensed under the terms of the MIT License (see the file LICENSE.txt).
 Acknowledgement
 ---------------
 Shlomi Matichin for his [slack_hebrew](https://github.com/shlomimatichin/slack-hebrew) plugin  
-Yuval Raz and Lital Lechtman for Mac porting and testing  
+Yuval Raz and Lital Lechtman for Mac port and testing  
 Ami Chayun for Linux port  
