@@ -75,87 +75,87 @@ SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown",
     }
 });"""
 
-def find_slack_local_path():
-    slack_root = os.path.join(os.environ['LOCALAPPDATA'],'slack')
-    if os.path.isdir(slack_root): # Local install mode
-        apps = os.path.join(slack_root, "app-")
+def find_app_local_path(app):
+    app_root = os.path.join(os.environ['LOCALAPPDATA'],app)
+    if os.path.isdir(app_root): # Local install mode
+        apps = os.path.join(app_root, "app-")
         candidates = [x for x in glob.glob(os.path.join(apps + "*")) if os.path.isdir(x)]
 
         versions = [[int(y) for y in x.rsplit('-',1)[-1].split('.')] for x in candidates]
         max_index, max_value = max(enumerate(versions), key=operator.itemgetter(1))
         return candidates[max_index]
 
-def find_slack_store_path():
+def find_app_store_path(app):
     try:
-        slack_root = subprocess.check_output(["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", '(Get-AppxPackage | where {$_.Name -match \"slack\"} ).InstallLocation'])
-        slack_root = slack_root.decode('utf-8').strip()
-        if not os.path.isdir(slack_root): return None
-        return os.path.join(slack_root, "app")
+        app_root = subprocess.check_output(["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", '(Get-AppxPackage | where {$_.Name -match \"'+app+'\"} ).InstallLocation'])
+        app_root = app_root.decode('utf-8').strip()
+        if not os.path.isdir(app_root): return None
+        return os.path.join(app_root, app)
     except subprocess.CalledProcessError:
         pass
 
 
 
-def find_slack_path(location):
+def find_app_path(location, app):
     if _platform == 'darwin':
         if location == "auto":
-            p = '/Applications/Slack.app/Contents/MacOS'
+            p = '/Applications/' + app + '.app/Contents/MacOS'
         else: 
             p = location
-        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack")):
+        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, app)):
             raise Exception("%s is not a valid slack directory" % p)
-        return os.path.join(p,"slack")
+        return os.path.join(p, app)
 
     elif _platform == 'win32' or _platform == 'win64':
         if location == "store":
-            p = find_slack_store_path()
+            p = find_app_store_path(app)
         elif location == "local":
-            p = find_slack_local_path()
+            p = find_app_local_path(app)
         elif location == "auto":
-            p = find_slack_local_path()
-            if p is None: p = find_slack_store_path()
+            p = find_app_local_path(app)
+            if p is None: p = find_app_store_path(app)
         else:
             p = location
 
         if p is None:
-            raise Exception("Cannot find a valid slack path in %s" % location)
-        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p,"slack.exe")):
-            raise Exception("%s is not a valid slack directory" % p)
-        return os.path.join(p,"slack.exe")
+            raise Exception("Cannot find a valid {} path in {}".format(app, location))
+        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, app + ".exe")):
+            raise Exception("{} find a valid {} directory".format(p, app))
+        return os.path.join(p, app + ".exe")
 
     elif _platform.startswith('linux'):
         p = None
         if location == "auto":
-            p = '/Applications/Slack.app/Contents/MacOS'
+            p = '/Applications/' + app + '.app/Contents/MacOS'
         else:
             for path in os.environ["PATH"].split(os.pathsep):
-                p = os.path.join(path, 'slack')
-                if os.path.isfile(slack_path) and os.access(slack_path, os.X_OK):
+                p = os.path.join(path, app)
+                if os.path.isfile(p) and os.access(p, os.X_OK):
                     break
         if p is None:
-            raise Exception("Could not find slack in path")
+            raise Exception("Could not find %s in path" % app)
 
         if os.path.isfile(p) and os.access(p, os.X_OK):
             return p
         else:
-            raise Exception("%s is not a valid slack path" % p)
+            raise Exception("{} find a valid {} path".format(p, app))
     else:
         raise Exception ("%s is not a supported platform" % _platfom)
 
 
 
 
-def run_slack(path, port):
+def run_app(path, port):
     DETACHED_PROCESS = 0x00000008
 
     if _platform == 'darwin':
-        subprocess.Popen([path, '--remote-debugging-port=%d' % port], shell=True)
+        subprocess.Popen([path + ' --remote-debugging-port=%d' % port], shell=True)
 
     elif _platform == 'win32' or _platform == 'win64':
         subprocess.Popen([path, "--remote-debugging-port=%d" % port], creationflags=DETACHED_PROCESS, shell=True)
 
     elif _platform.startswith('linux'):
-        subprocess.Popen([path, "--remote-debugging-port=%d" % port], shell=False)
+        subprocess.Popen([path + " --remote-debugging-port=%d" % port], shell=False)
 
     else:
         raise Exception("%s is not a supported platform" % _platfom)
@@ -165,14 +165,14 @@ def run_slack(path, port):
 def inject_script(tab, script):
     tab.Runtime.evaluate(expression = script)
 
-def kill_existing_slack():
+def kill_existing_app(app):
     for i in psutil.process_iter():               
         try:
-            name = os.path.splitext(i.name())[0]         
-            if name.lower() == "slack":               
-                six.print_("Killing slack process Pid:%s%s%s." % (Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
+            name = os.path.splitext(i.name())[0]
+            if name.lower() == app:
+                six.print_("Killing %s process Pid:%s%s%s." % (app, Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
                 try:
-                    i.terminate()                         
+                    i.terminate()
                 except:
                     pass
         except psutil.AccessDenied:
@@ -180,7 +180,7 @@ def kill_existing_slack():
 
 
 
-def get_browser_connection(timeout, port):
+def get_browser_connection(timeout, port, app):
     try:
         url = "http://127.0.0.1:%d" % port
         for i in range(timeout):
@@ -192,9 +192,9 @@ def get_browser_connection(timeout, port):
                 pass
             except: 
                 six.print_(sys.exc_info()[0])
-            six.print_("Establishing connection with slack. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i, Style.RESET_ALL), end='\r', flush=True)
+            six.print_("Establishing connection with %s. Timeout %s%s%s seconds." % (app, Fore.GREEN, timeout - i, Style.RESET_ALL), end='\r', flush=True)
             time.sleep(1)
-        raise IOError("Can't connect to slack at %s" % url)
+        raise IOError("Can't connect to {} at {}".format(app, url))
     finally:
         six.print_("\033[K" , end='\r', flush=True)
 
@@ -227,20 +227,24 @@ def update_slack_plugin():
 
 def main():
     parser = ArgumentParser(description=""" 
-    Inject hebrew support plugin into Slack's electron app.
+    Inject hebrew support plugin into Slack's tab inside an electron app.
 
-    This program injects the Chrome's hebrew_slack plugin into the electron (desktop) version of the slack app
+    This program injects the Chrome's hebrew_slack plugin into any electron (desktop) version of the slack app
     """)
     parser.add_argument("-l", "--location",
                       action="store", dest="location", default="auto",
-                      help="Location of slack to run, or auto, local (Windows only), store (Windows only) [default: auto]")
+                      help="Location of application to run, or auto, local (Windows only), store (Windows only) [default: auto]")
+
+    parser.add_argument("-a", "--app",
+                      default='slack',
+                      help="application to launch and inject code into [default: %(default)d]")
 
     parser.add_argument("-t", "--time",
                       default=15,
                       type=int,
-                      help="Wait for Slack to load for timeout seconds before injecting [default: %(default)d]")
+                      help="Wait for application to load for timeout seconds before injecting [default: %(default)d]")
 
-    parser.add_argument("-d","--debug", 
+    parser.add_argument("-d","--debug",
                       default=False,
                       action="store_true",
                       help="Additionally attempt to inject dev tools code [default: %(default)r]")
@@ -248,15 +252,15 @@ def main():
     parser.add_argument("-p", "--port",
                       type=int,
                       default=9222,
-                      help="Port on which Slack is listening to debug interface [default: %(default)d]")
+                      help="Port on which application is listening to debug interface [default: %(default)d]")
 
     parser.add_argument("--no-kill", dest="kill", action='store_false',
-                        help="Do not attempt to kill Slack before starting",
+                        help="Do not attempt to kill original application before starting",
                         default=True
                         )
 
     parser.add_argument("--no-start", dest="start", action='store_false',
-                        help="Do not attempt to start Slack (assume already running)",
+                        help="Do not attempt to start application (assume already running)",
                         default=True
                         )
 
@@ -272,9 +276,10 @@ def main():
     # parse args
     args  = parser.parse_args()
 
-    slack_path = find_slack_path(args.location)
+    app_path = find_app_path(args.location, args.app)
 
     colorama_init(autoreset=True)
+    six.print_(args.app)
     if args.update:
         try:
             global SLACK_PLUGIN_CODE
@@ -283,15 +288,15 @@ def main():
             pass #continue with existing script
 
     if args.kill:
-        kill_existing_slack()
+        kill_existing_app(args.app)
 
 
     if args.start:
-        six.print_("Running slack from %s %s." % (Fore.GREEN, slack_path))
-        run_slack(slack_path,args.port)
+        six.print_("Running %s from %s %s." % (args.app, Fore.GREEN, app_path))
+        run_app(app_path,args.port)
 
-    six.print_("Connecting to slack.")
-    browser, args.time = get_browser_connection(args.time, args.port)
+    six.print_("Connecting to %s." % args.app)
+    browser, args.time = get_browser_connection(args.time, args.port, args.app)
 
     six.print_("Looking for the slack windows.")
     tab, args.time = find_slack_tab(browser, 'msg_input', args.time)
