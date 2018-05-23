@@ -167,13 +167,16 @@ def inject_script(tab, script):
 
 def kill_existing_slack():
     for i in psutil.process_iter():               
-        name = os.path.splitext(i.name())[0]         
-        if name.lower() == "slack":               
-            six.print_("Killing slack process Pid:%s%s%s." % (Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
-            try:
-                i.terminate()                         
-            except:
-                pass
+        try:
+            name = os.path.splitext(i.name())[0]         
+            if name.lower() == "slack":               
+                six.print_("Killing slack process Pid:%s%s%s." % (Fore.GREEN, i.pid, Style.RESET_ALL), end='\n', flush=True)
+                try:
+                    i.terminate()                         
+                except:
+                    pass
+        except psutil.AccessDenied:
+            pass
 
 
 
