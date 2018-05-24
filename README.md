@@ -9,7 +9,7 @@ The code was developed to inject the Hebrew support (RTL) support into Slack, bu
 What is Onium?
 --------------
 
-Onium is a tool to inject the Hebrew support chrome plugin into the slack desktop app. 
+Onium is a tool to inject the Hebrew support chrome plugin into the any slack desktop app. 
 The tool was built to allow to inject any chrome plugin into electron, and will
 be changed in the future to support other electron apps. 
 
@@ -38,26 +38,27 @@ Usage
 Onium supports various command line parameters
 
 ```
-usage: onium [-h] [-l LOCATION] [-t TIME] [-d] [-p PORT] [--no-kill]
+usage: onium [-h] [-l LOCATION] [-a --app] [-t TIME] [-d] [-p PORT] [--no-kill]
              [--no-start] [--update | --no-update]
 
-Inject hebrew support plugin into Slack's electron app. This program injects
-the Chrome's hebrew_slack plugin into the electron (desktop) version of the
+Inject hebrew support plugin into any Slack's electron app. This program injects
+the Chrome's hebrew_slack plugin into the electron (desktop) version of a
 slack app
 
 optional arguments:
   -h, --help            show this help message and exit
   -l LOCATION, --location LOCATION
-                        Location of slack to run, or auto, local (Windows
+                        Location of application to run, or auto, local (Windows
                         only), store (Windows only) [default: auto]
-  -t TIME, --time TIME  Wait for Slack to load for timeout seconds before
+  -a --app              application to launch and inject into [default: slack]
+  -t TIME, --time TIME  Wait for application to load for timeout seconds before
                         injecting [default: 15]
   -d, --debug           Additionally attempt to inject dev tools code
                         [default: False]
-  -p PORT, --port PORT  Port on which Slack is listening to debug interface
+  -p PORT, --port PORT  Port on which application is listening to debug interface
                         [default: 9222]
-  --no-kill             Do not attempt to kill Slack before starting
-  --no-start            Do not attempt to start Slack (assume already running)
+  --no-kill             Do not attempt to kill application before starting
+  --no-start            Do not attempt to start application (assume already running)
   --update              Update the slack plugin from slack_hebrew github page
   --no-update           Do not update the slack plugin
 ```
