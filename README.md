@@ -38,27 +38,30 @@ Usage
 Onium supports various command line parameters
 
 ```
-usage: onium [-h] [-l LOCATION] [-a --app] [-t TIME] [-d] [-p PORT] [--no-kill]
-             [--no-start] [--update | --no-update]
+usage: __init__.py [-h] [-l LOCATION] [-a APP] [-t TIME] [-d] [-p PORT]
+                   [--no-kill] [--no-start] [--update | --no-update]
 
-Inject hebrew support plugin into any Slack's electron app. This program injects
-the Chrome's hebrew_slack plugin into the electron (desktop) version of a
-slack app
+Inject hebrew support plugin into Slack's tab inside an electron app. This
+program injects the Chrome's hebrew_slack plugin into any electron (desktop)
+version of the slack app
 
 optional arguments:
   -h, --help            show this help message and exit
   -l LOCATION, --location LOCATION
-                        Location of application to run, or auto, local (Windows
-                        only), store (Windows only) [default: auto]
-  -a --app              application to launch and inject into [default: slack]
-  -t TIME, --time TIME  Wait for application to load for timeout seconds before
-                        injecting [default: 15]
+                        Location of application to run, or auto, local
+                        (Windows only), store (Windows only) [default: auto]
+  -a APP, --app APP     application to launch and inject code into [default:
+                        slack]
+  -t TIME, --time TIME  Wait for application to load for timeout seconds
+                        before injecting [default: 15]
   -d, --debug           Additionally attempt to inject dev tools code
                         [default: False]
-  -p PORT, --port PORT  Port on which application is listening to debug interface
-                        [default: 9222]
-  --no-kill             Do not attempt to kill application before starting
-  --no-start            Do not attempt to start application (assume already running)
+  -p PORT, --port PORT  Port on which application is listening to debug
+                        interface [default: 9222]
+  --no-kill             Do not attempt to kill original application before
+                        starting
+  --no-start            Do not attempt to start application (assume already
+                        running)
   --update              Update the slack plugin from slack_hebrew github page
   --no-update           Do not update the slack plugin
 ```

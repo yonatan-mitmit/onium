@@ -237,7 +237,7 @@ def main():
 
     parser.add_argument("-a", "--app",
                       default='slack',
-                      help="application to launch and inject code into [default: %(default)d]")
+                      help="application to launch and inject code into [default: %(default)s]")
 
     parser.add_argument("-t", "--time",
                       default=15,
