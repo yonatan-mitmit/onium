@@ -38,8 +38,8 @@ Usage
 Onium supports various command line parameters
 
 ```
-usage: __init__.py [-h] [-l LOCATION] [-a APP] [-t TIME] [-d] [-p PORT]
-                   [--no-kill] [--no-start] [--update | --no-update]
+usage: onium [-h] [-l LOCATION] [-a APP] [-t TIME] [-d] [-p PORT]
+             [--no-kill] [--no-start] [--update | --no-update]
 
 Inject hebrew support plugin into Slack's tab inside an electron app. This
 program injects the Chrome's hebrew_slack plugin into any electron (desktop)
