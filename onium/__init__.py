@@ -283,7 +283,7 @@ def main():
 
     parser.add_argument("-m", "--method", dest="method", action='store', choices = SLACK_CODES.keys(),
                         help="Which script to inject to Slack [default: $(default)d]",
-                        default="old"
+                        default="new"
                         )
 
     update_parser = parser.add_mutually_exclusive_group(required=False)
