@@ -17,6 +17,22 @@ from sys import platform as _platform
 from colorama import init as colorama_init, Fore, Style
 
 
+
+
+SLACK_PLUGIN_CODE2 = """
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', function() {
+        jQuery('body').bind('DOMSubtreeModified', function() {
+            jQuery('.ql-editor, .c-message__body').attr('dir', 'auto').css('text-align', 'left');
+        });
+    }, false);
+
+    jQuery('body').bind('DOMSubtreeModified', function() {
+        jQuery('.ql-editor, .c-message__body').attr('dir', 'auto').css('text-align', 'left');
+    });
+}
+"""
+
 SLACK_PLUGIN_CODE = b"""
 document.getElementById(\'msg_input\').dir = \'auto\';
 
@@ -61,6 +77,7 @@ function domModified() {
 
 document.body.addEventListener("DOMSubtreeModified", domModified);
 """.decode('utf-8')
+SLACK_CODES = {"old": SLACK_PLUGIN_CODE, "new" : SLACK_PLUGIN_CODE2} 
 
 SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
@@ -163,7 +180,7 @@ def run_app(path, port):
 
 
 def inject_script(tab, script):
-    tab.Runtime.evaluate(expression = script)
+    r = tab.Runtime.evaluate(expression = script)
 
 def kill_existing_app(app):
     for i in psutil.process_iter():               
@@ -264,6 +281,11 @@ def main():
                         default=True
                         )
 
+    parser.add_argument("-m", "--method", dest="method", action='store', choices = SLACK_CODES.keys(),
+                        help="Which script to inject to Slack [default: $(default)d]",
+                        default="old"
+                        )
+
     update_parser = parser.add_mutually_exclusive_group(required=False)
     update_parser.add_argument('--update', dest='update', action='store_true', 
             help="Update the slack plugin from slack_hebrew github page"
@@ -271,7 +293,7 @@ def main():
     update_parser.add_argument('--no-update', dest='update', action='store_false',
             help="Do not update the slack plugin"
             )
-    parser.set_defaults(update=True)
+    parser.set_defaults(update=False)
 
     # parse args
     args  = parser.parse_args()
@@ -281,6 +303,9 @@ def main():
     colorama_init(autoreset=True)
     six.print_(args.app)
     if args.update:
+        if args.method != "old":
+            six.print_("Update only supported with method %sold%s" % (Fore.GREEN, Style.RESET_ALL))
+            sys.exit(-1)
         try:
             global SLACK_PLUGIN_CODE
             SLACK_PLUGIN_CODE = update_slack_plugin()
@@ -302,7 +327,8 @@ def main():
     tab, args.time = find_slack_tab(browser, 'msg_input', args.time)
     time.sleep(min(1, args.time)) #Giving it an extra second
 
-    inject_script(tab, SLACK_PLUGIN_CODE)
+    six.print_("Injecting code into slack. Method %s%s%s." % (Fore.GREEN, args.method, Style.RESET_ALL))
+    inject_script(tab, SLACK_CODES[args.method])
     if args.debug:
         inject_script(tab, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
 
