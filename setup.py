@@ -27,7 +27,7 @@ except (ImportError, OSError) as e:
 
 setup(
     name='onium',  # Required
-    version='0.3.5',  # Required
+    version='0.4.0',  # Required
     description='Onium - Inject hebrew support into a slack destop app',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/yonatan-mitmit/onium',  # Optional
@@ -73,7 +73,7 @@ setup(
     #   py_modules=["my_module"],
     #
     #packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    py_modules=["onium.py"],
+    py_modules=["onium"],
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
@@ -92,7 +92,7 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'onium=onium:main',
+            'onium=onium.code:main',
         ],
     },
 )
