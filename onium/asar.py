@@ -83,7 +83,6 @@ class Asar:
                     new_dict['files'][k] = {}
                     new_dict['files'][k].update(v)
                 elif "unpacked" in v:
-                    print("unpacked" , k)
                     new_dict['files'][k] = {}
                     new_dict['files'][k].update(v)
                     new_dict['files'][k]['content'] = open(os.path.join(unpacked_path, k),'rb').read()
