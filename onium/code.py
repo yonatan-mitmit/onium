@@ -24,7 +24,7 @@ if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', function() {
         jQuery('body').bind('DOMSubtreeModified', function() {
             //jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'left');
-            jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto');
+            jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'start');
         });
     }, false);
 }
@@ -32,7 +32,7 @@ if (typeof window !== 'undefined') {
 if (typeof jQuery !== 'undefined') {
         jQuery('body').bind('DOMSubtreeModified', function() {
         //jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'left');
-        jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto');
+        jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'start');
     });
 }
 """
