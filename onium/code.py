@@ -262,13 +262,17 @@ def do_inject_method(args, app_path, *others):
 
 def do_edit_method(args, app_path, asar_path):
     backup_file = os.path.join(asar_path, args.backup)
+    backup_unpacked_path = os.path.join(asar_path, args.backup + ".unpacked")
     asar_file = os.path.join(asar_path, 'app.asar')
-    if os.path.exists(backup_file):
+    asar_unpacked_path = os.path.join(asar_path, 'app.asar.unpacked')
+    if os.path.exists(backup_file) or (os.path.exists(asar_unpacked_path) and os.path.exists(backup_unpacked_path)):
         if not args.force:
             raise Exception("Backup file already exists. Consider using --force, stopped")
     else:
         six.print_("Backup %s as %s%s%s." % ('app.asar', Fore.GREEN, backup_file, Style.RESET_ALL))
         shutil.copy(asar_file, backup_file)
+        if os.path.exists(asar_unpacked_path):
+            shutil.copytree(asar_unpacked_path, backup_unpacked_path)
 
     asar = Asar.open(asar_file)
     #stat_file = "src\stat-cache.js"
