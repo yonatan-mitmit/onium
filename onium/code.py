@@ -271,7 +271,8 @@ def do_edit_method(args, app_path, asar_path):
         shutil.copy(asar_file, backup_file)
 
     asar = Asar.open(asar_file)
-    stat_file = "src\stat-cache.js"
+    #stat_file = "src\stat-cache.js"
+    stat_file = "src\static\ssb-interop.js"
 
     asar[stat_file] = asar[stat_file] + "\n".encode('utf-8') + SLACK_CODES[args.script].encode('utf-8')
     asar.save(asar_file)

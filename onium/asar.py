@@ -6,6 +6,10 @@ import struct
 import shutil
 
 
+### WARNING ### 
+### SUPPORT FOR UNPACKED FILES IS VERY PARTIAL. SOME FILES ARE MODIFIED IN PLACE INSTEAD OF TO A SIDE PROEJCT
+### REMOVE WHEN ACTUALLY FIXED
+
 def round_up(i, m):
     """Rounds up ``i`` to the next multiple of ``m``.
 
@@ -156,12 +160,15 @@ class Asar:
         return cls(**cls._build(header, concatenated_files))
 
     def __setitem__(self, name, content):
+        FILE_IS_UNPACKED = object()
         def _inline_header(header, fp, base_offset):
             new_dict = {"files": {} }
             for (k, v) in header['files'].items():
                 if "files" in v:
                     new_dict['files'][k] = _inline_header(v, fp, base_offset)
-                elif "link" in v or "unpacked" in v:
+                elif "link" in v or "unpacked" in v: #Ignore pre-set files
+                    new_dict['files'][k] = v
+                elif "content" in v: # ignore those items we've already set
                     new_dict['files'][k] = v
                 else:
                     d = {}
@@ -188,28 +195,41 @@ class Asar:
             if (p != ''):
                 # 'files' in root key
                 # Either P doesn't exist, or it exists and isn't a directory. 
-                if not p in header['files'] or not 'files' in header['files'][p]: 
+                if not p in header['files'] or not 'files' in header['files'][p]:
                     header['files'][p] = {'files':{}}
-                _set_inlined_header(header['files'][p], n, content)
+                return _set_inlined_header(header['files'][p], n, content)
             else: # we're at the target item
-                header['files'][n] = { "content" : content } 
+                if 'unpacked' in header['files'][n]:
+                    return FILE_IS_UNPACKED
+                else:
+                    header['files'][n] = { "content" : content } 
+                    return None
+
 
 
         if (type(content) != bytes):
             raise Exception("content must be gives as a bytes object")
 
-        header = _inline_header(self.header, self.fp, self.base_offset)
-        _set_inlined_header(header, name, content)
-        buf = io.BytesIO()
-        _reflat_header(header, buf)
+        inline = _set_inlined_header(self.header, name, content)
+        if (inline == FILE_IS_UNPACKED):
+           if self.path is None:
+               raise Exception ("Don't support unpacked with non-physical files")
+           file_path = os.path.join(self.path + ".unpacked", os.path.normpath(name))
+           open(file_path,'wb').write(content)
+        else:
+            header = _inline_header(self.header, self.fp, self.base_offset)
+            _set_inlined_header(header, name, content)
+            buf = io.BytesIO()
+            _reflat_header(header, buf)
 
-        out = self._build(header, buf.getvalue())
-        self.header = out['header']
-        self.fp = out['fp']
-        self.base_offset = out['base_offset']
-        self.path = None
+            out = self._build(header, buf.getvalue())
+            self.header = out['header']
+            self.fp = out['fp']
+            self.base_offset = out['base_offset']
+            self.path = None
 
     def __getitem__(self, item):
+        FILE_IS_UNPACKED = object()
         def _rec_get_item(header, item, buf, base_offset):
             (p,n) = forward_path_split(item)
             if not 'files' in header:
@@ -219,14 +239,20 @@ class Asar:
                     raise Exception("item not found")
                 return _rec_get_item(header['files'][p], n, buf, base_offset)
             else: # we're at target item
-                if not 'offset' in header['files'][n]:
+                if 'unpacked' in header['files'][n]: 
+                    # handle unpacked files modification
+                    return FILE_IS_UNPACKED
+                elif not 'offset' in header['files'][n]:
                     raise Exception("Path isn't a file")
                 buf.seek(base_offset + int(header['files'][n]['offset']))
                 return buf.read(header['files'][n]['size'])
 
-
-        return _rec_get_item(self.header, item, self.fp, self.base_offset)
-
+        ret = _rec_get_item(self.header, item, self.fp, self.base_offset)
+        if ret is not FILE_IS_UNPACKED: return ret
+        if self.path is None: 
+            raise Exception ("Don't support unpacked with non-physical files")
+        file_path = os.path.join(self.path + ".unpacked", os.path.normpath(item))
+        return open(file_path,'rb').read()
 
 
     def _copy_unpacked_file(self, source, destination):
@@ -384,9 +410,11 @@ class Asar:
         self._extract_directory('.', self.header['files'], path)
 
     def save(self, fn):
+        self.fp.seek(0) # just making sure we're at the start of the file
+        data = self.fp.read()
         with open(fn, 'wb') as f:
             self.fp.seek(0) # just making sure we're at the start of the file
-            f.write(self.fp.read())
+            f.write(data)
 
     def __enter__(self):
         return self
