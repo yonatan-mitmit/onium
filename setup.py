@@ -73,7 +73,8 @@ setup(
     #   py_modules=["my_module"],
     #
     #packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
-    py_modules=["onium"],
+    #py_modules=["onium"],
+    packages=["onium"],
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
