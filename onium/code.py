@@ -169,7 +169,7 @@ def run_app(path, param):
         subprocess.Popen(cmd, creationflags=DETACHED_PROCESS, shell=True)
 
     elif _platform.startswith('linux'):
-        subprocess.Popen([path + " " + param], shell=False)
+        subprocess.Popen([path, param], shell=False)
 
     else:
         raise Exception("%s is not a supported platform" % _platfom)
