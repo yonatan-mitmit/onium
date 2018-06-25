@@ -23,16 +23,14 @@ SLACK_PLUGIN_CODE2 = """
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', function() {
         jQuery('body').bind('DOMSubtreeModified', function() {
-            //jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'left');
-            jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'start');
+            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row').attr('dir', 'auto').css('text-align', 'start');
         });
     }, false);
 }
 
 if (typeof jQuery !== 'undefined') {
         jQuery('body').bind('DOMSubtreeModified', function() {
-        //jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'left');
-        jQuery('.ql-editor, .c-message__body, .message_body').attr('dir', 'auto').css('text-align', 'start');
+            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row').attr('dir', 'auto').css('text-align', 'start');
     });
 }
 """
