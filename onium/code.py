@@ -20,18 +20,20 @@ from .asar import Asar
 
 
 SLACK_PLUGIN_CODE2 = """
+function doIt() {
+        jQuery('body').bind('DOMSubtreeModified', function() {
+            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre').attr('dir', 'auto').css('text-align', 'start');
+        });
+}
+
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', function() {
-        jQuery('body').bind('DOMSubtreeModified', function() {
-            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row').attr('dir', 'auto').css('text-align', 'start');
-        });
+        doIt();
     }, false);
 }
 
 if (typeof jQuery !== 'undefined') {
-        jQuery('body').bind('DOMSubtreeModified', function() {
-            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row').attr('dir', 'auto').css('text-align', 'start');
-    });
+    doIt();
 }
 """
 
