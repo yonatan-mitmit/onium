@@ -40,6 +40,7 @@ As long as python's scripts folder is in your path, simply run
 
     $ onium [inject]
 or 
+
     $ onium edit
 
 
