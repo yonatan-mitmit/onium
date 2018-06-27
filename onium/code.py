@@ -352,7 +352,7 @@ def main():
                         )
 
     parser.add_argument("-s", "--script", dest="script", action='store', choices = SLACK_CODES.keys(),
-                        help="Which script to inject to Slack [default: $(default)d]",
+                        help="Which script to inject to Slack [default: %(default)s]",
                         default="new"
                         )
     sub_parsers = parser.add_subparsers()
