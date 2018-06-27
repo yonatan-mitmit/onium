@@ -260,6 +260,13 @@ def do_inject_method(args, app_path, *others):
     except:
         pass
 
+def edit_file(content, script):
+    COMMENT = "\n// ### INSERTED BELOW ### //\n".encode('utf-8')
+    loc = content.rfind(COMMENT)
+    if (loc != -1): content = content[:loc]
+    return content + COMMENT + script
+    
+
 def do_edit_method(args, app_path, asar_path):
     backup_file = os.path.join(asar_path, args.backup)
     backup_unpacked_path = os.path.join(asar_path, args.backup + ".unpacked")
@@ -267,7 +274,7 @@ def do_edit_method(args, app_path, asar_path):
     asar_unpacked_path = os.path.join(asar_path, 'app.asar.unpacked')
     if os.path.exists(backup_file) or (os.path.exists(asar_unpacked_path) and os.path.exists(backup_unpacked_path)):
         if not args.force:
-            raise Exception("Backup file already exists. Consider using --force, stopped")
+            raise Exception("Backup file already exists, consider using --force. Stopped")
     else:
         six.print_("Backup %s as %s%s%s." % ('app.asar', Fore.GREEN, backup_file, Style.RESET_ALL))
         shutil.copy(asar_file, backup_file)
@@ -275,10 +282,9 @@ def do_edit_method(args, app_path, asar_path):
             shutil.copytree(asar_unpacked_path, backup_unpacked_path)
 
     asar = Asar.open(asar_file)
-    #stat_file = "src\stat-cache.js"
     stat_file = "src\static\ssb-interop.js"
 
-    asar[stat_file] = asar[stat_file] + "\n".encode('utf-8') + SLACK_CODES[args.script].encode('utf-8')
+    asar[stat_file] = edit_file(asar[stat_file], SLACK_CODES[args.script].encode('utf-8'))
     asar.save(asar_file)
     six.print_("Patching %s%s%s." % (Fore.GREEN, asar_file, Style.RESET_ALL))
 
