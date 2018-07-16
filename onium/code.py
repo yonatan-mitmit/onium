@@ -23,6 +23,7 @@ SLACK_PLUGIN_CODE2 = """
 function doIt() {
         jQuery('body').bind('DOMSubtreeModified', function() {
             jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre').attr('dir', 'auto').css('text-align', 'start');
+            jQuery('.c-message__edited_label').css('display','inline-block');
         });
 }
 
