@@ -148,7 +148,7 @@ def find_app_path(location, app):
             raise Exception("Could not find %s in path" % app)
 
         if os.path.isfile(p) and os.access(p, os.X_OK):
-            return p, os.path.join(path, "resources")
+            return p, os.path.join(path[0], "resources")
         else:
             raise Exception("{} find a valid {} path".format(p, app))
     else:
@@ -163,14 +163,15 @@ def run_app(path, param):
     if _platform == 'darwin':
         subprocess.Popen([path + " " + param], shell=True)
 
+    cmd = [path]
+    if param is not None:
+        cmd = cmd + [param]
+
     elif _platform == 'win32' or _platform == 'win64':
-        cmd = [path]
-        if param is not None:
-            cmd = cmd + [param]
         subprocess.Popen(cmd, creationflags=DETACHED_PROCESS, shell=True)
 
     elif _platform.startswith('linux'):
-        subprocess.Popen([path, param], shell=False)
+        subprocess.Popen(cmd, shell=False)
 
     else:
         raise Exception("%s is not a supported platform" % _platfom)
@@ -283,7 +284,7 @@ def do_edit_method(args, app_path, asar_path):
             shutil.copytree(asar_unpacked_path, backup_unpacked_path)
 
     asar = Asar.open(asar_file)
-    stat_file = "src\static\ssb-interop.js"
+    stat_file = os.path.join("src", "static", "ssb-interop.js")
 
     asar[stat_file] = edit_file(asar[stat_file], SLACK_CODES[args.script].encode('utf-8'))
     asar.save(asar_file)
