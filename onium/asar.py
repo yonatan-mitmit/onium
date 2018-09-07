@@ -6,10 +6,6 @@ import struct
 import shutil
 
 
-### WARNING ### 
-### SUPPORT FOR UNPACKED FILES IS VERY PARTIAL. SOME FILES ARE MODIFIED IN PLACE INSTEAD OF TO A SIDE PROEJCT
-### REMOVE WHEN ACTUALLY FIXED
-
 def round_up(i, m):
     """Rounds up ``i`` to the next multiple of ``m``.
 

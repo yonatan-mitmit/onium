@@ -283,7 +283,7 @@ def do_edit_method(args, app_path, asar_path):
             shutil.copytree(asar_unpacked_path, backup_unpacked_path)
 
     asar = Asar.open(asar_file)
-    stat_file = "src\static\ssb-interop.js"
+    stat_file = os.path.join("src","static","ssb-interop.js")
 
     asar[stat_file] = edit_file(asar[stat_file], SLACK_CODES[args.script].encode('utf-8'))
     asar.save(asar_file)
