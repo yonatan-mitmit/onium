@@ -114,7 +114,10 @@ def find_app_path(location, app):
             p = location
         if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, app)):
             raise Exception("%s is not a valid slack directory" % p)
-        return os.path.join(p, app), os.path.join(p,"resources")
+        asar_path = os.path.join(p,"resources") 
+        if len([name for name in os.listdir(p)]) is 1:
+                asar_path = '/Applications/' + app + '.app/Contents/Resources' 
+        return os.path.join(p, app), asar_path
 
     elif _platform == 'win32' or _platform == 'win64':
         if location == "store":
@@ -161,7 +164,12 @@ def run_app(path, param):
     DETACHED_PROCESS = 0x00000008
 
     if _platform == 'darwin':
-        subprocess.Popen([path + " " + param], shell=True)
+        cmd = path
+        if param is not None:
+            cmd = cmd + " " + param
+        else:
+            cmd = "open -a " + cmd
+        subprocess.Popen([cmd], shell=True)
 
     elif _platform == 'win32' or _platform == 'win64':
         cmd = [path]
