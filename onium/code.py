@@ -142,6 +142,8 @@ def find_app_path(location, app):
             for path in os.environ["PATH"].split(os.pathsep):
                 p = os.path.join(path, app)
                 if os.path.isfile(p) and os.access(p, os.X_OK):
+                    p=os.path.realpath(p)
+                    path=os.path.dirname(p)
                     break
         else:
             p = location
@@ -178,7 +180,11 @@ def run_app(path, param):
         subprocess.Popen(cmd, creationflags=DETACHED_PROCESS, shell=True)
 
     elif _platform.startswith('linux'):
-        subprocess.Popen([path, param], shell=False)
+        if (param is not None):
+            arg = [path, param]
+        else:
+            arg = path
+        subprocess.Popen(arg, shell=False)
 
     else:
         raise Exception("%s is not a supported platform" % _platfom)
