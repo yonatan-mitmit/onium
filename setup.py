@@ -27,7 +27,7 @@ except (ImportError, OSError) as e:
 
 setup(
     name='onium',  # Required
-    version='0.4.6',  # Required
+    version='0.4.7',  # Required
     description='Onium - Inject hebrew support into a slack desktop app',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/yonatan-mitmit/onium',  # Optional
