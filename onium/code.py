@@ -20,11 +20,13 @@ from .asar import Asar
 
 
 SLACK_PLUGIN_CODE2 = """
+
+function changeStyle() { 
+    jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre, .c-message_kit__text').attr('dir', 'auto').css('text-align', 'start');
+    jQuery('.c-message__edited_label').css('display','inline-block');
+}
 function doIt() {
-        jQuery('body').bind('DOMSubtreeModified', function() {
-            jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre').attr('dir', 'auto').css('text-align', 'start');
-            jQuery('.c-message__edited_label').css('display','inline-block');
-        });
+        jQuery('body').on('DOMSubtreeModified', changeStyle)
 }
 
 if (typeof window !== 'undefined') {
@@ -289,7 +291,7 @@ def do_edit_method(args, app_path, asar_path):
     asar_unpacked_path = os.path.join(asar_path, 'app.asar.unpacked')
     if os.path.exists(backup_file) or (os.path.exists(asar_unpacked_path) and os.path.exists(backup_unpacked_path)):
         if not args.force:
-            raise Exception("Backup file already exists, consider using --force. Stopped")
+            raise Exception("Backup file already exists, consider using --force. Stopped" + backup_file)
     else:
         six.print_("Backup %s as %s%s%s." % ('app.asar', Fore.GREEN, backup_file, Style.RESET_ALL))
         shutil.copy(asar_file, backup_file)
