@@ -208,6 +208,18 @@ class Asar:
 
         return _rec_get_item(self.header, item)
 
+    def __contains__(self, item):
+        def _rec_get_item(header, item):
+            (p,n) = forward_path_split(item)
+            if not 'files' in header:
+                return False 
+            if p != '':
+                if not p in header['files'] or not 'files' in header['files'][p]:
+                    return False;
+                return _rec_get_item(header['files'][p], n)
+            return True
+        return _rec_get_item(self.header, item);
+
     def _extract_file(self, source, info, destination):
         """Locates and writes to disk a given file in the asar archive.
 

@@ -282,6 +282,16 @@ def edit_file(content, script):
     loc = content.rfind(COMMENT)
     if (loc != -1): content = content[:loc]
     return content + COMMENT + script
+
+def find_target_file_in_asar(asar):
+    knowns = [
+            os.path.join("src","static","ssb-interop.js"),
+            os.path.join("dist","ssb-interop.bundle.js")
+    ]
+
+    for f in knowns: 
+        if f in asar: return f;
+    raise Exception("Can't find any of %s in asar file" % str(knowns))
     
 
 def do_edit_method(args, app_path, asar_path):
@@ -299,7 +309,7 @@ def do_edit_method(args, app_path, asar_path):
             shutil.copytree(asar_unpacked_path, backup_unpacked_path)
 
     asar = Asar.open(asar_file)
-    stat_file = os.path.join("src","static","ssb-interop.js")
+    stat_file = find_target_file_in_asar(asar)
 
     asar[stat_file] = edit_file(asar[stat_file], SLACK_CODES[args.script].encode('utf-8'))
     asar.save(asar_file)
