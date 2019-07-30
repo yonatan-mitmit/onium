@@ -353,6 +353,24 @@ class Asar:
             with open(target,"wb") as f:
                 f.write(v)
 
+    def mark_packed(self, item, state):
+        def _rec_set_packed_item(header, item, state):
+            (p,n) = forward_path_split(item)
+            if not 'files' in header:
+                raise Exception("error in header")
+            if p != '':
+                if not p in header['files'] or not 'files' in header['files'][p]:
+                    raise Exception("item not found")
+                return _rec_set_packed_item(header['files'][p], n, state)
+
+            if 'content' in header['files'][n]: # First check if we already set this file
+                if (state):
+                    header['files'][n]['unpacked'] = True
+                else:
+                    header['files'][n].pop('unpacked',None)
+            else:
+                raise Exception("No content")
+        return _rec_set_packed_item(self.header, item, state);
 
     def __enter__(self):
         return self
