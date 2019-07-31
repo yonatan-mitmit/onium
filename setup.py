@@ -27,7 +27,7 @@ except (ImportError, OSError) as e:
 
 setup(
     name='onium',  # Required
-    version='0.5.0',  # Required
+    version='0.6.0',  # Required
     description='Onium - Inject hebrew support into a slack desktop app',  # Required
     long_description=long_description,  # Optional
     url='https://github.com/yonatan-mitmit/onium',  # Optional
@@ -42,7 +42,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         # Pick your license as you wish
         'License :: OSI Approved :: MIT License',
@@ -55,6 +55,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     # This field adds keywords for your project which will appear on the
@@ -82,7 +83,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pychrome', 'six', 'colorama', 'psutil'],  # Optional
+    install_requires=['six', 'colorama', 'psutil'],  # Optional
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow

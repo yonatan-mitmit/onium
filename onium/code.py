@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pychrome
 import requests
 import os
 import platform
@@ -17,74 +16,56 @@ from argparse import ArgumentParser,_SubParsersAction
 from sys import platform as _platform
 from colorama import init as colorama_init, Fore, Style
 from .asar import Asar
+from string import Template
 
 
-SLACK_PLUGIN_CODE2 = """
+SLACK_PLUGIN_CODE = """
+const { app } = require('electron')
+const { BrowserWindow } = require('electron')
 
+payload = `
 function changeStyle() { 
-    jQuery('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre, .c-message_kit__text').attr('dir', 'auto').css('text-align', 'start');
-    jQuery('.c-message__edited_label').css('display','inline-block');
+    var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre', 'c-message_kit__text'];
+
+    classes.forEach((cls) => {
+      for (let item of document.getElementsByClassName(cls))
+      { 
+        item.setAttribute('dir','auto');
+        item.style.textAlign = 'start';
+      }
+    });
+
+    classes = ['c-message__edited_label'];
+
+    classes.forEach((cls) => {
+      for (let item of document.getElementsByClassName(cls))
+      { 
+        item.style.display = 'inline-block';
+      }
+    });
+    
+
+    //$$('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre, .c-message_kit__text').attr('dir', 'auto').css('text-align', 'start');
+    //$$('.c-message__edited_label').css('display','inline-block');
 }
 function doIt() {
-        jQuery('body').on('DOMSubtreeModified', changeStyle)
+  document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
 }
 
-if (typeof window !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', function() {
-        doIt();
-    }, false);
-}
+doIt();
+`
+$debug_script
 
-if (typeof jQuery !== 'undefined') {
-    doIt();
-}
+app.on('web-contents-created', (evt, webContents) => {
+     webContents.on('did-finish-load', function() {
+        webContents.executeJavaScript(payload); 
+     });
+});
 """
 
-SLACK_PLUGIN_CODE = b"""
-document.getElementById(\'msg_input\').dir = \'auto\';
-
-function elementShouldBeRTL(element) {
-    return /[\xd7\x90-\xd7\xaa]/.test(element.innerHTML);
-}
-
-function alreadyApplied(element) {
-    return element.children.length == 1 && (
-            element.children[0].tagName == "P" || element.children[0].tagName == "p");
-}
-
-function applyTo(element) {
-    element.innerHTML = \'<p style="direction: rtl; text-align: left; margin: 0;">\' + element.innerHTML + \'</p>\';
-    for (var i in element.children[0].children) {
-        var child = element.children[0].children[i];
-        if (!(child.style instanceof CSSStyleDeclaration))
-            continue;
-        child.style.textAlign = "initial";
-    }
-}
-
-function setDirections() {
-    var contents = document.getElementsByClassName(\'c-message__body\');
-    for (var i in contents) {
-        var element = contents[i];
-        if (!elementShouldBeRTL(element))
-            continue;
-        if (alreadyApplied(element))
-            continue;
-        applyTo(element);
-    }
-}
-
-function domModified() {
-    document.body.removeEventListener(\'DOMSubtreeModified\', domModified);
-    setTimeout(function() { // debouce modifications
-        setDirections();
-        document.body.addEventListener(\'DOMSubtreeModified\', domModified);
-    }, 500);
-}
-
-document.body.addEventListener("DOMSubtreeModified", domModified);
-""".decode('utf-8')
-SLACK_CODES = {"old": SLACK_PLUGIN_CODE, "new" : SLACK_PLUGIN_CODE2} 
+SLACK_DEBUGGER_CODE = """
+app.commandLine.appendSwitch('remote-debugging-port', '9222');
+"""
 
 
 def find_app_local_path(app):
@@ -105,7 +86,6 @@ def find_app_store_path(app):
         return os.path.join(app_root, app)
     except subprocess.CalledProcessError:
         pass
-
 
 
 def find_app_path(location, app):
@@ -162,8 +142,6 @@ def find_app_path(location, app):
         raise Exception ("%s is not a supported platform" % _platfom)
 
 
-
-
 def run_app(path, param):
     DETACHED_PROCESS = 0x00000008
 
@@ -191,11 +169,6 @@ def run_app(path, param):
     else:
         raise Exception("%s is not a supported platform" % _platfom)
 
-
-
-def inject_script(tab, script):
-    r = tab.Runtime.evaluate(expression = script)
-
 def kill_existing_app(app):
     for i in psutil.process_iter():               
         try:
@@ -209,88 +182,27 @@ def kill_existing_app(app):
         except psutil.AccessDenied:
             pass
 
-
-
-def get_browser_connection(timeout, port, app):
-    try:
-        url = "http://127.0.0.1:%d" % port
-        for i in range(timeout):
-            try:
-                browser = pychrome.Browser(url)
-                browser.list_tab()
-                return (browser, timeout - i)
-            except requests.exceptions.ConnectionError:
-                pass
-            except: 
-                six.print_(sys.exc_info()[0])
-            six.print_("Establishing connection with %s. Timeout %s%s%s seconds." % (app, Fore.GREEN, timeout - i, Style.RESET_ALL), end='\r', flush=True)
-            time.sleep(1)
-        raise IOError("Can't connect to {} at {}".format(app, url))
-    finally:
-        six.print_("\033[K" , end='\r', flush=True)
-
-
-def find_slack_tab(browser, div, timeout):
-    try: 
-        for i in range(timeout):
-            for tab in browser.list_tab():
-                tab.start()
-                res = tab.Runtime.evaluate(expression = "document.getElementById('%s')" % div)
-                if res.get('result',{}).get('objectId',None) is not None: # Found element with that name, screen is loaded
-                    return (tab, timeout - i)
-                tab.stop()
-            six.print_("Waiting for target window to load. Timeout %s%s%s seconds." % (Fore.GREEN, timeout - i , Style.RESET_ALL), end='\r', flush=True)
-            time.sleep(1)
-        raise IOError("Couldn't find slack window")
-    finally:
-        six.print_("\033[K" , end='\r', flush=True)
-
-def update_slack_plugin():
-    url = r'https://raw.githubusercontent.com/shlomimatichin/slack-hebrew/master/source/slack-hebrew.js'
-    six.print_("Downloading slack plugin from %s%s%s." % (Fore.GREEN, url, Style.RESET_ALL), end='\n', flush=True)
-    r = requets.get(url)
-    if r.status_code == 200:
-        return r.content.decode('utf-8')
+def edit_file(content, script, prefix):
+    COMMENT_PRE = "\n// ### INSERTED BELOW ### //\n".encode('utf-8')
+    COMMENT_POST = "\n// ### INSERTED ABOVE ### //\n".encode('utf-8')
+    loc_pre = content.rfind(COMMENT_PRE)
+    loc_post = content.rfind(COMMENT_POST)
+    if (loc_pre != -1): 
+        if (loc_post == -1): 
+            raise Exception("found prefix at %d but can't find postfix" % loc_pre)
+        content = content[:loc_pre] + content[loc_post:]
+    if prefix:
+        return COMMENT_PRE + script + COMMENT_POST + content
     else:
-        six.print_("Couldn't download plugin. Error was %s%s%s." % (Fore.RED, r.status_code , Style.RESET_ALL), end='\n', flush=True)
-        raise Exception("Can't download")
-
-def do_inject_method(args, app_path, *others):
-
-    if args.start:
-        param = ' --remote-debugging-port=%d' % args.port
-        six.print_("Running %s from %s %s." % (args.app, Fore.GREEN, app_path))
-        run_app(app_path, param)
-
-    six.print_("Connecting to %s." % args.app)
-    browser, args.time = get_browser_connection(args.time, args.port, args.app)
-
-    six.print_("Looking for the slack windows.")
-    tab, args.time = find_slack_tab(browser, 'msg_input', args.time)
-    time.sleep(min(1, args.time)) #Giving it an extra second
-
-    six.print_("Injecting code into slack. Method %s%s%s." % (Fore.GREEN, args.script, Style.RESET_ALL))
-    inject_script(tab, SLACK_CODES[args.script])
-
-    try: 
-        tab.stop()
-    except:
-        pass
-
-def edit_file(content, script):
-    COMMENT = "\n// ### INSERTED BELOW ### //\n".encode('utf-8')
-    loc = content.rfind(COMMENT)
-    if (loc != -1): content = content[:loc]
-    return content + COMMENT + script
+        return content + COMMENT_PRE + script + COMMENT_POST
 
 def find_target_file_in_asar(asar):
     knowns = [
-            os.path.join("src","static","ssb-interop.js"),
-            os.path.join("dist","ssb-interop.bundle.js")
+            os.path.join("dist","main.js")
     ]
 
     for f in knowns: 
-        if f in asar: return f;
+        if f in asar: return f
     raise Exception("Can't find any of %s in asar file" % str(knowns))
     
 
@@ -311,48 +223,22 @@ def do_edit_method(args, app_path, asar_path):
     asar = Asar.open(asar_file)
     stat_file = find_target_file_in_asar(asar)
 
-    asar[stat_file] = edit_file(asar[stat_file], SLACK_CODES[args.script].encode('utf-8'))
+    template = Template(SLACK_PLUGIN_CODE)
+    if args.debug:
+        script = template.substitute(debug_script=SLACK_DEBUGGER_CODE)
+    else:
+        script = template.substitute(debug_script="")
+
+
+    asar[stat_file] = edit_file(asar[stat_file], script.encode('utf-8'), True)
+    six.print_("Marking %s%s%s in %s%s%s as unpacked file." % (Fore.GREEN, stat_file, Style.RESET_ALL, Fore.GREEN, asar_file, Style.RESET_ALL))
+    asar.mark_packed(stat_file, True)
     asar.save(asar_file)
     six.print_("Patching %s%s%s." % (Fore.GREEN, asar_file, Style.RESET_ALL))
 
-
     if args.start:
-        six.print_("Running %s from %s %s." % (args.app, Fore.GREEN, app_path))
+        six.print_("Running %s from %s %s." % ('slack', Fore.GREEN, app_path))
         run_app(app_path, None)
-
-
-
-
-def set_default_subparser(self, name, args=None, positional_args=0):
-    """default subparser selection. Call after setup, just before parse_args()
-    name: is the name of the subparser to call by default
-    args: if set is the argument list handed to parse_args()
-
-    , tested with 2.7, 3.2, 3.3, 3.4
-    it works with 2.6 assuming argparse is installed
-    """
-    subparser_found = False
-    for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
-            break
-    else:
-        for x in self._subparsers._actions:
-            if not isinstance(x, _SubParsersAction):
-                continue
-            for sp_name in x._name_parser_map.keys():
-                if sp_name in sys.argv[1:]:
-                    subparser_found = True
-        if not subparser_found:
-            # insert default in last position before global positional
-            # arguments, this implies no global options are specified after
-            # first positional argument
-            if args is None:
-                sys.argv.insert(len(sys.argv) - positional_args, name)
-            else:
-                args.insert(len(args) - positional_args, name)
-
-ArgumentParser.set_default_subparser = set_default_subparser
-
 
 def main():
     parser = ArgumentParser(description=""" 
@@ -364,10 +250,6 @@ def main():
                       action="store", dest="location", default="auto",
                       help="Location of application to run, or auto, local (Windows only), store (Windows only) [default: auto]")
 
-    parser.add_argument("-a", "--app",
-                      default='slack',
-                      help="application to launch and inject code into [default: %(default)s]")
-
     parser.add_argument("--no-kill", dest="kill", action='store_false',
                         help="Do not attempt to kill original application before starting",
                         default=True
@@ -378,68 +260,30 @@ def main():
                         default=True
                         )
 
-    parser.add_argument("-s", "--script", dest="script", action='store', choices = SLACK_CODES.keys(),
-                        help="Which script to inject to Slack [default: %(default)s]",
-                        default="new"
-                        )
-    sub_parsers = parser.add_subparsers()
-
-    inject_sp = sub_parsers.add_parser('inject',help="Use the injection method - run slack with debugging support and inject the hebrew scripts at runtime")
-
-    inject_sp.add_argument("-t", "--time",
-                      default=15,
-                      type=int,
-                      help="Wait for application to load for timeout seconds before injecting [default: %(default)d]")
-
-    inject_sp.add_argument("-p", "--port",
-                      type=int,
-                      default=9222,
-                      help="Port on which application is listening to debug interface [default: %(default)d]")
-
-    inject_sp.set_defaults(func = do_inject_method)
-
-    edit_sp = sub_parsers.add_parser("edit", help="Use the edit method - modify Slack's on-disk files to permanently inject the hebrew support")
-    edit_sp.add_argument("-b", "--backup", 
+    parser.add_argument("-b", "--backup", 
                          default = "app.asar.orig",
                          help = "Name to use save original slack app backup. This will never overwrite an existing backup file. Fails if file already exists and not used with -f [default: %(default)s]")
-    edit_sp.add_argument("-f", "--force", 
+    parser.add_argument("-f", "--force", 
                          default = False,
                          action = "store_true",
                          help = "Proceed even if backup file already exists [default: %(default)s]")
-    edit_sp.set_defaults(func = do_edit_method)
 
-
-
-    update_parser = parser.add_mutually_exclusive_group(required=False)
-    update_parser.add_argument('--update', dest='update', action='store_true', 
-            help="Update the slack plugin from slack_hebrew github page"
-            )
-    update_parser.add_argument('--no-update', dest='update', action='store_false',
-            help="Do not update the slack plugin"
-            )
-    parser.set_defaults(update=False)
-    parser.set_default_subparser("inject")
+    parser.add_argument("-d", "--debug",
+                        default = False,
+                        action = "store_true",
+                        help = "Pass --remote-debugging-port=9222 to enable rendered debugger with chrome")
 
     # parse args
     args  = parser.parse_args()
 
-    app_path, asar_path = find_app_path(args.location, args.app)
+    app_path, asar_path = find_app_path(args.location, 'slack')
 
     colorama_init(autoreset=True)
-    if args.update:
-        if args.script != "old":
-            six.print_("Update only supported with method %sold%s" % (Fore.GREEN, Style.RESET_ALL))
-            sys.exit(-1)
-        try:
-            global SLACK_PLUGIN_CODE
-            SLACK_PLUGIN_CODE = update_slack_plugin()
-        except:
-            pass #continue with existing script
 
     if args.kill:
-        kill_existing_app(args.app)
+        kill_existing_app('slack')
 
 
-    args.func(args, app_path, asar_path)
+    do_edit_method(args, app_path, asar_path)
 
     six.print_("Done")
