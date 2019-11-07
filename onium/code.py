@@ -25,13 +25,29 @@ const { BrowserWindow } = require('electron')
 
 payload = `
 function changeStyle() { 
-    var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre', 'c-message_kit__text'];
+    document.getElementsByTagName('body')[0].removeEventListener('DOMSubtreeModified', changeStyle)
+
+    var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre'];
 
     classes.forEach((cls) => {
       for (let item of document.getElementsByClassName(cls))
       { 
         item.setAttribute('dir','auto');
         item.style.textAlign = 'start';
+      }
+    });
+    
+    var classes = ['c-message_kit__text'];
+
+    classes.forEach((cls) => {
+      for (let item of document.getElementsByClassName(cls))
+      { 
+        n = document.createElement('div')
+        n.innerHTML = item.innerHTML;
+        n.setAttribute('class',item.getAttribute('class'));
+        n.setAttribute('dir','auto');
+        n.style.textAlign = 'start';
+        item.replaceWith(n);
       }
     });
 
@@ -45,8 +61,7 @@ function changeStyle() {
     });
     
 
-    //$$('.ql-editor, .c-message__body, .message_body, .c-message_attachment__text, .msg_inline_attachment_row, .c-mrkdwn__pre, .c-message_kit__text').attr('dir', 'auto').css('text-align', 'start');
-    //$$('.c-message__edited_label').css('display','inline-block');
+    document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
 }
 function doIt() {
   document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
