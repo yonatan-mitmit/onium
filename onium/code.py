@@ -27,15 +27,17 @@ payload = `
 function changeStyle() { 
     document.getElementsByTagName('body')[0].removeEventListener('DOMSubtreeModified', changeStyle)
 
-    var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre'];
+    // MITMIT The following, per element edit is disabled as we now edit the CSS directly, and do so only once.
 
-    classes.forEach((cls) => {
-      for (let item of document.getElementsByClassName(cls))
-      { 
-        item.setAttribute('dir','auto');
-        item.style.textAlign = 'start';
-      }
-    });
+    // var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre', 'p-rich_text_section', 'p-rich_text_block'];
+
+    // classes.forEach((cls) => {
+    //   for (let item of document.getElementsByClassName(cls))
+    //   { 
+    //     item.setAttribute('dir','auto');
+    //     item.style.textAlign = 'start';
+    //   }
+    // });
     
     var classes = ['c-message_kit__text'];
 
@@ -51,20 +53,57 @@ function changeStyle() {
       }
     });
 
-    classes = ['c-message__edited_label'];
+    // classes = ['c-message__edited_label'];
+    //
+    // classes.forEach((cls) => {
+    //   for (let item of document.getElementsByClassName(cls))
+    //   { 
+    //     item.style.display = 'inline-block';
+    //   }
+    // });
 
-    classes.forEach((cls) => {
-      for (let item of document.getElementsByClassName(cls))
-      { 
-        item.style.display = 'inline-block';
-      }
-    });
-    
+    // for (let sheet of document.styleSheets) {
+    //   for (let rule of sheet.cssRules) {
+    //       if (rule.selectorText != null && rule.selectorText.indexOf('.p-rich_text_list li::before') != -1) {
+    //           rule.style['margin-left'] = 0
+    //       }
+    //   }
+    // }
+
 
     document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
 }
+
+function editStyle(selector, style, value) {
+  for (let sheet of document.styleSheets) {
+    for (let rule of sheet.cssRules) {
+      if (rule.selectorText != null && rule.selectorText.indexOf(selector) != -1) {
+          rule.style[style] = value;
+      }
+    }
+  }
+}
+
 function doIt() {
   document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
+  editStyle('.p-rich_text_list li::before', 'margin-left', 0);
+  editStyle('.p-rich_text_list li', 'margin-left', 0);
+  editStyle('.ql-editor ol > li::before', 'margin-left', 0);
+  editStyle('.ql-editor ol > li', 'margin-left', 0);
+
+
+  var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre', 'p-rich_text_section', 'p-rich_text_block'];
+
+  classes.forEach((cls) => {
+    editStyle(cls, 'text-align', 'start');
+    editStyle(cls, 'direction', 'auto');
+  });
+
+  classes = ['c-message__edited_label'];
+  classes.forEach((cls) => {
+    editStyle(cls, 'display', 'inline-block');
+  });
+
 }
 
 doIt();
@@ -112,7 +151,7 @@ def find_app_path(location, app):
         if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, app)):
             raise Exception("%s is not a valid slack directory" % p)
         asar_path = os.path.join(p,"resources") 
-        if len([name for name in os.listdir(p)]) is 1:
+        if len([name for name in os.listdir(p)]) == 1:
                 asar_path = '/Applications/' + app + '.app/Contents/Resources' 
         return os.path.join(p, app), asar_path
 
