@@ -252,7 +252,8 @@ def edit_file(content, script, prefix):
 
 def find_target_file_in_asar(asar):
     knowns = [
-            os.path.join("dist","main.js")
+            os.path.join("dist","main.js"),
+            os.path.join("dist","main.bundle.js")
     ]
 
     for f in knowns: 

@@ -211,13 +211,14 @@ class Asar:
     def __contains__(self, item):
         def _rec_get_item(header, item):
             (p,n) = forward_path_split(item)
+            print(p,n)
             if not 'files' in header:
                 return False 
             if p != '':
                 if not p in header['files'] or not 'files' in header['files'][p]:
                     return False;
                 return _rec_get_item(header['files'][p], n)
-            return True
+            return n in header['files']
         return _rec_get_item(self.header, item);
 
     def _extract_file(self, source, info, destination):
