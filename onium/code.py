@@ -11,7 +11,9 @@ import glob
 import subprocess
 import six
 import psutil
+import json
 import shutil
+import posixpath
 from argparse import ArgumentParser,_SubParsersAction
 from sys import platform as _platform
 from colorama import init as colorama_init, Fore, Style
@@ -251,6 +253,15 @@ def edit_file(content, script, prefix):
         return content + COMMENT_PRE + script + COMMENT_POST
 
 def find_target_file_in_asar(asar):
+    # first we try to parse the package.json in the asar
+    package = 'package.json'
+    if package in asar:
+        main = json.loads(asar[package])['main']
+        main = main.replace(posixpath.sep, os.path.sep)
+        if main in asar: 
+            six.print_("Found entry point %s%s%s in %s." % (Fore.GREEN, main, Style.RESET_ALL, package), end='\n', flush=True)
+            return main
+
     knowns = [
             os.path.join("dist","main.js"),
             os.path.join("dist","main.bundle.js")
