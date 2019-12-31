@@ -86,24 +86,41 @@ function editStyle(selector, style, value) {
   }
 }
 
+function addStyle() {
+	// Create the <style> tag
+	var style = document.createElement("style");
+
+	// Add a media (and/or media query) here if you'd like!
+	// style.setAttribute("media", "screen")
+	// style.setAttribute("media", "only screen and (max-width : 1024px)")
+
+	// WebKit hack :(
+	style.appendChild(document.createTextNode(""));
+
+	// Add the <style> element to the page
+	document.head.appendChild(style);
+
+	return style.sheet;
+}
+
 function doIt() {
   document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
-  editStyle('.p-rich_text_list li::before', 'margin-left', 0);
-  editStyle('.p-rich_text_list li', 'margin-left', 0);
-  editStyle('.ql-editor ol > li::before', 'margin-left', 0);
-  editStyle('.ql-editor ol > li', 'margin-left', 0);
+  sheet = addStyle()
+  sheet.insertRule('.p-rich_text_list li::before {margin-left : 0 ; } ');
+  sheet.insertRule('.p-rich_text_list li  {margin-left : 0 ; } ');
+  sheet.insertRule('.ql-editor ol > li::before { margin-left : 0; }' );
+  sheet.insertRule('.ql-editor ol > li { margin-left : 0; }');
 
 
-  var classes = ['ql-editor', 'c-message__body', 'message_body', 'c-message_attachment__text', 'msg_inline_attachment_row', 'c-mrkdwn__pre', 'p-rich_text_section', 'p-rich_text_block'];
+  var classes = ['.ql-editor', '.c-message__body', '.message_body', '.c-message_attachment__text', '.msg_inline_attachment_row', '.c-mrkdwn__pre', '.p-rich_text_section', '.p-rich_text_block'];
 
   classes.forEach((cls) => {
-    editStyle(cls, 'text-align', 'start');
-    editStyle(cls, 'direction', 'auto');
+    sheet.insertRule(cls + ' { text-align : start; direction : auto; }');
   });
 
-  classes = ['c-message__edited_label'];
+  classes = ['.c-message__edited_label'];
   classes.forEach((cls) => {
-    editStyle(cls, 'display', 'inline-block');
+    sheet.insertRule(cls + ' { display: block; }');
   });
 
 }
