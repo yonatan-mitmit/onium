@@ -110,6 +110,8 @@ function doIt() {
   sheet.insertRule('.p-rich_text_list li  {margin-left : 0 ; } ');
   sheet.insertRule('.ql-editor ol > li::before { margin-left : 0; }' );
   sheet.insertRule('.ql-editor ol > li { margin-left : 0; }');
+  sheet.insertRule('.c-texty_input .ql-editor ol > li::before { margin-left : 0; }' );
+  sheet.insertRule('.c-texty_input .ql-editor ol > li { margin-left : 0; }');
 
 
   var classes = ['.ql-editor', '.c-message__body', '.message_body', '.c-message_attachment__text', '.msg_inline_attachment_row', '.c-mrkdwn__pre', '.p-rich_text_section', '.p-rich_text_block'];
