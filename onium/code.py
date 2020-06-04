@@ -42,18 +42,27 @@ function changeStyle() {
     // });
     
     var classes = ['c-message_kit__text'];
-
     classes.forEach((cls) => {
-      for (let item of document.getElementsByClassName(cls))
-      { 
-        n = document.createElement('div')
-        n.innerHTML = item.innerHTML;
-        n.setAttribute('class',item.getAttribute('class'));
-        n.setAttribute('dir','auto');
-        n.style.textAlign = 'start';
-        item.replaceWith(n);
-      }
+       for (let item of document.getElementsByClassName(cls))
+       { 
+         item.setAttribute('dir','auto');
+       }
     });
+
+
+    // var classes = ['c-message_kit__text'];
+
+    // classes.forEach((cls) => {
+    //   for (let item of document.getElementsByClassName(cls))
+    //   { 
+    //     n = document.createElement('div')
+    //     //n.innerHTML = item.innerHTML;
+    //     n.setAttribute('dir','auto');
+    //     n.style.textAlign = 'start';
+    //     item.replaceWith(n)
+    //     n.appendChild(item)
+    //   }
+    // });
 
     // classes = ['c-message__edited_label'];
     //
@@ -104,7 +113,6 @@ function addStyle() {
 }
 
 function doIt() {
-  document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
   sheet = addStyle()
   sheet.insertRule('.p-rich_text_list li::before {margin-left : 0 ; } ');
   sheet.insertRule('.p-rich_text_list li  {margin-left : 0 ; } ');
@@ -125,6 +133,12 @@ function doIt() {
     sheet.insertRule(cls + ' { display: block; }');
   });
 
+  classes = ['.c-message_kit__text'];
+  classes.forEach((cls) => {
+    sheet.insertRule(cls + ' { text-align : start; direction : auto; display : block; }');
+  });
+
+  document.getElementsByTagName('body')[0].addEventListener('DOMSubtreeModified', changeStyle)
 }
 
 doIt();
