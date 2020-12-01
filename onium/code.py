@@ -270,6 +270,8 @@ def kill_existing_app(app):
                     pass
         except psutil.AccessDenied:
             pass
+        except psutil.ZombieProcess:
+            pass
 
 def edit_file(content, script, prefix):
     COMMENT_PRE = "\n// ### INSERTED BELOW ### //\n".encode('utf-8')
