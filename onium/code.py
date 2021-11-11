@@ -75,7 +75,8 @@ function changeStyle() {
 
     // for (let sheet of document.styleSheets) {
     //   for (let rule of sheet.cssRules) {
-    //       if (rule.selectorText != null && rule.selectorText.indexOf('.p-rich_text_list li::before') != -1) {
+    //       if (rule.selectorText != null && rule.selectorText.indexOf('.p-rich_text_list li::bef
+    ore') != -1) {
     //           rule.style['margin-left'] = 0
     //       }
     //   }
@@ -127,6 +128,8 @@ function doIt() {
   sheet.insertRule('.ql-editor ul > li { margin-left : 0; }');
   sheet.insertRule('.c-texty_input .ql-editor ul > li::before { margin-left : 0; }' );
   sheet.insertRule('.c-texty_input .ql-editor ul > li { margin-left : 0; }');
+  sheet.insertRule('.c-texty_input_unstyled__container .ql-editor ol>li:before, .c-texty_input_unstyled__container .ql-editor ul>li:before { margin-left : 0; }');
+
 
 
   var classes = ['.ql-editor', '.c-message__body', '.message_body', '.c-message_attachment__text', '.msg_inline_attachment_row', '.c-mrkdwn__pre', '.p-rich_text_section', '.p-rich_text_block'];
@@ -313,12 +316,26 @@ def find_target_file_in_asar(asar):
         if f in asar: return f
     raise Exception("Can't find any of %s in asar file" % str(knowns))
     
+def find_asar_file(asar_path):
+    asar_file = os.path.join(asar_path, 'app.asar')
+    asar_unpacked_path = os.path.join(asar_path, 'app.asar.unpacked')
+    return (asar_file, asar_unpacked_path)
+
+def check_edit_method(asar_path):
+    asar_file, asar_unpacked_path = find_asar_file(asar_path)
+    if not os.access(asar_path, os.W_OK):
+        return False
+    if not os.access(asar_file, os.W_OK):
+        return False
+    return True
+
+
+
 
 def do_edit_method(args, app_path, asar_path):
     backup_file = os.path.join(asar_path, args.backup)
     backup_unpacked_path = os.path.join(asar_path, args.backup + ".unpacked")
-    asar_file = os.path.join(asar_path, 'app.asar')
-    asar_unpacked_path = os.path.join(asar_path, 'app.asar.unpacked')
+    asar_file, asar_unpacked_path = find_asar_file(asar_path)
     if os.path.exists(backup_file) or (os.path.exists(asar_unpacked_path) and os.path.exists(backup_unpacked_path)):
         if not args.force:
             raise Exception("Backup file already exists, consider using --force. Stopped" + backup_file)
@@ -388,6 +405,10 @@ def main():
 
     colorama_init(autoreset=True)
 
+    if not check_edit_method(asar_path):
+        six.print_("%sCannot write to %s. Run elevated. %s" % (Fore.RED, asar_path, Style.RESET_ALL), end='\n', flush=True)
+        return False
+
     if args.kill:
         kill_existing_app('slack')
 
@@ -395,3 +416,4 @@ def main():
     do_edit_method(args, app_path, asar_path)
 
     six.print_("Done")
+    return True
