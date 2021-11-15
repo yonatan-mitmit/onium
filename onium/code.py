@@ -75,8 +75,7 @@ function changeStyle() {
 
     // for (let sheet of document.styleSheets) {
     //   for (let rule of sheet.cssRules) {
-    //       if (rule.selectorText != null && rule.selectorText.indexOf('.p-rich_text_list li::bef
-    ore') != -1) {
+    //       if (rule.selectorText != null && rule.selectorText.indexOf('.p-rich_text_list li::before') != -1) {
     //           rule.style['margin-left'] = 0
     //       }
     //   }
@@ -190,15 +189,15 @@ def find_app_store_path(app):
 def find_app_path(location, app):
     if _platform == 'darwin':
         if location == "auto":
-            p = '/Applications/' + app + '.app/Contents/MacOS'
+            p = '/Applications/' + app + '.app'
         else: 
             p = location
-        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, app)):
+        if not os.path.isdir(p) or not os.path.isfile(os.path.join(p, "Contents/Macos/Slack")):
             raise Exception("%s is not a valid slack directory" % p)
         asar_path = os.path.join(p,"resources") 
         if len([name for name in os.listdir(p)]) == 1:
                 asar_path = '/Applications/' + app + '.app/Contents/Resources' 
-        return os.path.join(p, app), asar_path
+        return p, asar_path
 
     elif _platform == 'win32' or _platform == 'win64':
         if location == "store":
@@ -358,12 +357,36 @@ def do_edit_method(args, app_path, asar_path):
     asar[stat_file] = edit_file(asar[stat_file], script.encode('utf-8'), True)
     six.print_("Marking %s%s%s in %s%s%s as unpacked file." % (Fore.GREEN, stat_file, Style.RESET_ALL, Fore.GREEN, asar_file, Style.RESET_ALL))
     asar.mark_packed(stat_file, True)
-    asar.save(asar_file)
+    header_sha256 = asar.save(asar_file)
     six.print_("Patching %s%s%s." % (Fore.GREEN, asar_file, Style.RESET_ALL))
 
-    if args.start:
-        six.print_("Running %s from %s %s." % ('slack', Fore.GREEN, app_path))
-        run_app(app_path, None)
+    # Macos on Apple Silicone is set to run only signed applications 
+    # Annoyingly, the app.asar header is now hashed and the hash is hard coded in the app's Info.Plist
+    # Therefore, on Apple Sillicone we need to modify the Info.Plist and resign the app.
+    # Luckily, we can still use self-signed certs here (also know as ad-hoc signature)
+    # Although the asar actually contains hash for each file, in practice, the current version of Slack ignores this hash
+    # The current version of slack doesn't verify the
+    uname = os.uname()
+    if uname.sysname == 'Darwin' and uname.machine == 'arm64':
+        import plistlib
+        plistpath = os.path.join(app_path, 'Contents', 'Info.plist')
+        plist = plistlib.load(open(plistpath,'rb'))
+        plist['ElectronAsarIntegrity']['Resources/app.asar']['hash'] = header_sha256
+        backup_file = plistpath + ".bak"
+        if os.path.exists(backup_file):
+            if not args.force:
+                raise Exception("Backup file already exists, consider using --force. Stopped" + backup_file)
+        else:
+            six.print_("Backup %s as %s%s%s." % (plistpath, Fore.GREEN, backup_file, Style.RESET_ALL))
+            shutil.copy(plistpath, backup_file)
+        plistlib.dump(plist, open(plistpath,'wb'))
+
+        out = subprocess.check_output(["/usr/bin/codesign --sign - --force --deep --preserve-metadata=entitlements %s" % app_path], shell=True, stderr=subprocess.STDOUT)
+        six.print_("Code signing returned %s" % out);
+
+
+
+
 
 def main():
     parser = ArgumentParser(description=""" 
@@ -401,12 +424,12 @@ def main():
     # parse args
     args  = parser.parse_args()
 
-    app_path, asar_path = find_app_path(args.location, 'slack')
+    app_path, asar_path = find_app_path(args.location, 'Slack')
 
     colorama_init(autoreset=True)
 
     if not check_edit_method(asar_path):
-        six.print_("%sCannot write to %s. Run elevated. %s" % (Fore.RED, asar_path, Style.RESET_ALL), end='\n', flush=True)
+        six.print_("Cannot write to %s%s%s. Run elevated." % (Fore.RED, asar_path, Style.RESET_ALL), end='\n', flush=True)
         return False
 
     if args.kill:
@@ -414,6 +437,10 @@ def main():
 
 
     do_edit_method(args, app_path, asar_path)
+
+    if args.start:
+        six.print_("Running %s from %s %s." % ('slack', Fore.GREEN, app_path))
+        run_app(app_path, None)
 
     six.print_("Done")
     return True

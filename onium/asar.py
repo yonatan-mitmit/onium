@@ -4,6 +4,7 @@ import json
 import errno
 import struct
 import shutil
+import hashlib
 
 
 def round_up(i, m):
@@ -65,8 +66,8 @@ class Asar:
         data_size, header_size, header_object_size, header_string_size = struct.unpack('<4I', fp.read(16))
 
 
-        header_json = fp.read(header_string_size).decode('utf-8')
-        header=json.loads(header_json)
+        header_json = fp.read(header_string_size)
+        header=json.loads(header_json.decode('utf-8'))
 
         base_offset=round_up(16 + header_string_size, 4)
 
@@ -109,6 +110,7 @@ class Asar:
 
         # pad remaining space with NULLs
         diff = aligned_size - header_string_size
+        sha = hashlib.sha256(header_json).hexdigest()
         header_json = header_json + b'\0' * (diff) if diff else header_json
 
         fp = io.BytesIO()
@@ -120,7 +122,8 @@ class Asar:
                 'fp':fp,
                 'header':header,
                 'base_offset':round_up(16 + header_string_size, 4),
-                'unpacked_files' : {}
+                'unpacked_files' : {},
+                'sha256' : sha
         }
 
     @classmethod
@@ -331,7 +334,6 @@ class Asar:
                     buf.write(v['content'])
                 del target['files'][k]['content']
 
-
     def save(self, fn):
         target = {}
         buf = io.BytesIO()
@@ -339,6 +341,7 @@ class Asar:
         self._reflat_header(self.header, target, buf, unpacked_files, "")
 
         data = Asar._build(target, buf.getvalue())
+        sha = data['sha256']
         data = data['fp'].getvalue()
 
         with open(fn, 'wb') as f:
@@ -352,6 +355,7 @@ class Asar:
                 os.makedirs(p)
             with open(target,"wb") as f:
                 f.write(v)
+        return sha
 
     def mark_packed(self, item, state):
         def _rec_set_packed_item(header, item, state):

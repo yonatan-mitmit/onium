@@ -1,3 +1,16 @@
+# M1 Mac
+Life became so much harder when using the M1 Macos version due to mandatory code signing.
+now we have to take the following steps.
+1. Patch files as always
+1. Extract the sha256 of the header (serialized as json with no padding)
+1. Edit the "Info.plist" by and update the hash at ElectronAsarIntegrity -> Resources/app.asar -> hash by
+```console
+➜ sudo vi Slack.app/Contents/Info.plist
+```
+1. Resign Slack with an adhoc signature so mac will run it by ```console 
+sudo codesign --sign -  --force --deep --preserve-metadata=entitlements ./Slack.app
+```
+
 # Notes to self.
 Slack makes life harder and less fun.
 
