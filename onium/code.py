@@ -367,7 +367,7 @@ def do_edit_method(args, app_path, asar_path):
     # Although the asar actually contains hash for each file, in practice, the current version of Slack ignores this hash
     # The current version of slack doesn't verify the
     uname = os.uname()
-    if uname.sysname == 'Darwin' and uname.machine == 'arm64':
+    if uname.sysname == 'Darwin': #and uname.machine == 'arm64':
         import plistlib
         plistpath = os.path.join(app_path, 'Contents', 'Info.plist')
         plist = plistlib.load(open(plistpath,'rb'))
