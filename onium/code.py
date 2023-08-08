@@ -227,7 +227,8 @@ def find_app_path(location, app):
                     break
         else:
             p = location
-            path = os.path.split(location)
+            p = os.path.realpath(p)
+            path = os.path.dirname(p)
 
         if p is None:
             raise Exception("Could not find %s in path" % app)
