@@ -14,7 +14,7 @@ readme_file = path.join(here, 'README.md')
 
 try:
     import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
+    long_description = pypandoc.convert_file('README.md', 'rst')
     long_description = long_description.replace("\r","")
 except (ImportError, OSError) as e:
     print("\n\n!!! pandoc not found, long_description is bad, don't upload this to PyPI !!!\n\n")
